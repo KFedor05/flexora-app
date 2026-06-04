@@ -188,14 +188,22 @@ function monthDayCell(brief, dayNum) {
   const hasFlame = !isFuture && brief.done + brief.skipped > 0;
   const star = brief.skippedWholeDay;
 
-  cell.className = `day-cell ${colorClass}${isToday ? " today" : ""}`;
+  // A past day is clickable only when there is something to show on the
+  // Today view for it: at least one habit was scheduled (total > 0), or it
+  // was marked as a skip-day, or there are stored entries (covers the rare
+  // case where a habit was deleted after being logged on this day).
+  // Today and future days follow the existing rules.
+  const hasContent = brief.total > 0 || brief.skippedWholeDay || brief.done + brief.skipped > 0;
+  const clickable = isToday || (!isFuture && hasContent);
+
+  cell.className = `day-cell ${colorClass}${isToday ? " today" : ""}${!clickable ? " inert" : ""}`;
   cell.dataset.date = iso;
   cell.innerHTML = `
     ${star ? `<svg class="star-mark" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>` : ""}
     <span class="day-num">${dayNum}</span>
     ${hasFlame ? `<span class="day-flame">${FIRE_SMALL}</span>` : `<span class="day-flame"></span>`}
   `;
-  if (!isFuture) {
+  if (clickable) {
     cell.addEventListener("click", () => pickDate(iso));
   }
   return cell;

@@ -1781,9 +1781,12 @@ input[type="date"].input {
   transition: all 0.15s;
   user-select: none;
 }
-.day-cell:hover:not(.future):not(.other-month) {
+.day-cell:hover:not(.future):not(.other-month):not(.inert) {
   transform: translateY(-1px);
   border-color: var(--accent-border);
+}
+.day-cell.inert {
+  cursor: default;
 }
 .day-cell .day-num {
   font-size: 13.5px;
@@ -1834,7 +1837,7 @@ input[type="date"].input {
   background: transparent;
   border-color: var(--border-strong);
   opacity: 0.4;
-  cursor: not-allowed;
+  cursor: default;
 }
 .day-cell.future .day-num {
   color: var(--text-dim);
