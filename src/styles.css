@@ -1853,9 +1853,14 @@ input[type="date"].input {
   font-weight: 500;
 }
 .day-cell.today {
+  background: rgba(74, 144, 255, 0.1);
+  border-color: var(--accent);
   box-shadow:
     0 0 0 2px var(--accent-border),
     0 0 16px rgba(74, 144, 255, 0.25);
+}
+.day-cell.today .day-num {
+  color: var(--text);
 }
 .day-cell .star-mark {
   position: absolute;

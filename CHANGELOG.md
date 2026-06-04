@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-06-04
+
+### Fixed
+
+- **Calendar:** today's cell now stands out clearly from empty past/future
+  days — adds a soft accent-blue tint, an accent border, and brighter day
+  number, on top of the existing glow.
+
 ## [1.0.0] - 2026-06-04
 
 First public release.
@@ -41,5 +49,6 @@ First public release.
   `cargo clippy -D warnings`, `cargo test`
 - GitHub Actions release pipeline builds `.exe` / `.dmg` / `.AppImage` from a tag
 
-[Unreleased]: https://github.com/KFedor05/flexora-app/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/KFedor05/flexora-app/compare/v1.0.1...HEAD
+[1.0.1]: https://github.com/KFedor05/flexora-app/releases/tag/v1.0.1
 [1.0.0]: https://github.com/KFedor05/flexora-app/releases/tag/v1.0.0
