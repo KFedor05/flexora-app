@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Flexora — Редактор привычек по дням</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  :root {
+    --bg: #0a0b12;
+    --bg-modal: #0f111a;
+    --surface: #161924;
+    --border: #1d2030;
+    --border-strong: #252938;
+    --text: #e7e9f0;
+    --text-muted: #8b8fa3;
+    --text-subtle: #6b7080;
+    --accent: #4a90ff;
+    --accent-soft: rgba(74, 144, 255, 0.15);
+    --accent-border: rgba(74, 144, 255, 0.4);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--border-strong); }
+
+  .app { display: flex; height: 100vh; overflow: hidden; }
+
+  /* Left sidebar */
+  .leftbar {
+    width: 240px;
+    flex-shrink: 0;
+    border-right: 1px solid var(--surface);
+    padding: 24px 20px;
+    display: flex;
+    flex-direction: column;
+  }
+  .logo {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 32px;
+    padding: 0 4px;
+  }
+  .logo-icon {
+    width: 36px; height: 36px;
+    border-radius: 9px;
+    background: var(--accent);
+    display: flex; align-items: center; justify-content: center;
+    color: white; font-weight: 800; font-size: 18px;
+  }
+  .logo-text { font-size: 17px; font-weight: 800; letter-spacing: -0.01em; }
+  .sidebar-btn {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    color: var(--text-muted);
+    background: transparent; border: none;
+    text-align: left; cursor: pointer;
+    font-family: inherit; font-size: 14px; font-weight: 500;
+    transition: all 0.15s;
+  }
+  .sidebar-btn:hover { background: var(--surface); color: var(--text); }
+
+  /* Main */
+  .main {
+    flex: 1;
+    overflow-y: auto;
+    padding: 32px 40px 60px;
+  }
+
+  /* Top hint / instructions */
+  .meta-text {
+    font-size: 12.5px;
+    color: var(--text-subtle);
+    line-height: 1.5;
+    max-width: 880px;
+    margin-bottom: 18px;
+  }
+  .meta-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--accent);
+    font-weight: 700;
+    margin-bottom: 10px;
+  }
+
+  /* Page header row with back button + new */
+  .page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 18px;
+    gap: 20px;
+  }
+  .page-title {
+    font-size: 24px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+  }
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .nav-btn {
+    padding: 7px 14px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    background: transparent;
+    border: 1px solid var(--border);
+    transition: all 0.15s;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .nav-btn:hover { background: var(--surface); border-color: var(--border-strong); }
+  .nav-btn.muted { color: var(--text-muted); }
+  .btn-new {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 8px 16px;
+    border-radius: 10px;
+    background: var(--accent);
+    color: white;
+    border: none;
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: inherit;
+  }
+  .btn-new:hover { background: #3b7eee; transform: translateY(-1px); }
+
+  /* Week tabs */
+  .week-tabs {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 6px;
+    padding: 6px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 28px;
+  }
+  .week-tab {
+    padding: 12px 0;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: inherit;
+    letter-spacing: 0.02em;
+  }
+  .week-tab:hover { color: var(--text); background: rgba(74, 144, 255, 0.05); }
+  .week-tab.active {
+    background: var(--accent-soft);
+    color: #b4d2ff;
+    border: 1px solid var(--accent-border);
+    box-shadow: 0 0 0 1px rgba(74, 144, 255, 0.1);
+  }
+
+  /* Day heading */
+  .day-heading {
+    margin-bottom: 24px;
+  }
+  .day-heading h2 {
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    margin: 0;
+    line-height: 1.1;
+  }
+  .day-heading .date-info {
+    font-size: 13px;
+    color: var(--text-subtle);
+    margin-top: 6px;
+    font-weight: 500;
+  }
+
+  /* Section */
+  .section { margin-bottom: 20px; }
+  .section-header {
+    display: flex;
+    align-items: center;
+    padding: 10px 6px 8px;
+    border-bottom: 1px solid var(--surface);
+    margin-bottom: 4px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .section-title {
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+  .section-count {
+    font-size: 12.5px;
+    color: var(--text-subtle);
+    font-weight: 500;
+    margin-left: 6px;
+  }
+  .section-collapse {
+    margin-left: auto;
+    color: var(--text-subtle);
+    transition: transform 0.15s;
+  }
+  .section.collapsed .section-collapse { transform: rotate(-90deg); }
+  .section.collapsed .habit-list { display: none; }
+
+  /* Habit row */
+  .habit-list { display: flex; flex-direction: column; }
+  .row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 8px;
+    border-radius: 8px;
+    transition: background 0.12s;
+  }
+  .row:hover { background: var(--surface); }
+
+  .drag-handle {
+    width: 18px;
+    height: 18px;
+    color: var(--text-subtle);
+    cursor: grab;
+    opacity: 0.5;
+    transition: opacity 0.15s;
+    flex-shrink: 0;
+  }
+  .drag-handle:hover { opacity: 1; }
+  .row:active .drag-handle { cursor: grabbing; }
+
+  .row-name {
+    flex: 1;
+    font-size: 14.5px;
+    font-weight: 500;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .edit-text-btn {
+    padding: 7px 16px;
+    border-radius: 8px;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: inherit;
+    flex-shrink: 0;
+  }
+  .edit-text-btn:hover {
+    background: var(--accent-soft);
+    border-color: var(--accent-border);
+    color: #8ab9ff;
+  }
+
+  /* Empty section */
+  .empty-section {
+    padding: 22px 8px;
+    color: var(--text-subtle);
+    font-size: 13.5px;
+    font-style: italic;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- LEFT SIDEBAR -->
+  <aside class="leftbar">
+    <div class="logo">
+      <div class="logo-icon">F</div>
+      <div class="logo-text">Flexora</div>
+    </div>
+    <button class="sidebar-btn">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>
+        <circle cx="12" cy="12" r="3"/>
+      </svg>
+      Настройки
+    </button>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- Header with back + new -->
+    <div class="page-header">
+      <div class="page-title">Привычки по дням</div>
+      <div class="header-actions">
+        <button class="nav-btn muted">← К сегодня</button>
+        <button class="btn-new">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+          Новая привычка
+        </button>
+      </div>
+    </div>
+
+    <!-- Hint -->
+    <div class="meta-text">
+      Показана текущая неделя. Для интервальных привычек берётся реальный цикл от даты старта.
+      Порядок строк можно менять перетаскиванием за иконку слева — это влияет на порядок отображения в «Сегодня».
+    </div>
+
+    <div class="meta-label">Выберите день недели</div>
+
+    <!-- Week tabs -->
+    <div class="week-tabs">
+      <button class="week-tab" onclick="switchDay(this, 'понедельник', '2026-06-01')">Пн</button>
+      <button class="week-tab" onclick="switchDay(this, 'вторник', '2026-06-02')">Вт</button>
+      <button class="week-tab active" onclick="switchDay(this, 'среда', '2026-06-03')">Ср</button>
+      <button class="week-tab" onclick="switchDay(this, 'четверг', '2026-06-04')">Чт</button>
+      <button class="week-tab" onclick="switchDay(this, 'пятница', '2026-06-05')">Пт</button>
+      <button class="week-tab" onclick="switchDay(this, 'суббота', '2026-06-06')">Сб</button>
+      <button class="week-tab" onclick="switchDay(this, 'воскресенье', '2026-06-07')">Вс</button>
+    </div>
+
+    <!-- Day heading -->
+    <div class="day-heading">
+      <h2>День: <span id="day-name">среда</span></h2>
+      <div class="date-info" id="day-date">2026-06-03</div>
+    </div>
+
+    <!-- Sections -->
+    <section class="section">
+      <header class="section-header" onclick="this.closest('.section').classList.toggle('collapsed')">
+        <div class="section-title">Утро</div>
+        <span class="section-count">3</span>
+        <svg class="section-collapse" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+      </header>
+      <div class="habit-list">
+        <div class="row">
+          <svg class="drag-handle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+          <div class="row-name">почистить зубы утром</div>
+          <button class="edit-text-btn">Редактировать</button>
+        </div>
+        <div class="row">
+          <svg class="drag-handle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+          <div class="row-name">душ утром</div>
+          <button class="edit-text-btn">Редактировать</button>
+        </div>
+        <div class="row">
+          <svg class="drag-handle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+          <div class="row-name">шарик и иголки утром</div>
+          <button class="edit-text-btn">Редактировать</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <header class="section-header" onclick="this.closest('.section').classList.toggle('collapsed')">
+        <div class="section-title">День</div>
+        <span class="section-count">4</span>
+        <svg class="section-collapse" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+      </header>
+      <div class="habit-list">
+        <div class="row">
+          <svg class="drag-handle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+          <div class="row-name">уборка</div>
+          <button class="edit-text-btn">Редактировать</button>
+        </div>
+        <div class="row">
+          <svg class="drag-handle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+          <div class="row-name">прогулка</div>
+          <button class="edit-text-btn">Редактировать</button>
+        </div>
+        <div class="row">
+          <svg class="drag-handle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+          <div class="row-name">силовая тренировка</div>
+          <button class="edit-text-btn">Редактировать</button>
+        </div>
+        <div class="row">
+          <svg class="drag-handle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+          <div class="row-name">выпить протеин</div>
+          <button class="edit-text-btn">Редактировать</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <header class="section-header" onclick="this.closest('.section').classList.toggle('collapsed')">
+        <div class="section-title">Вечер</div>
+        <span class="section-count">3</span>
+        <svg class="section-collapse" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+      </header>
+      <div class="habit-list">
+        <div class="row">
+          <svg class="drag-handle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+          <div class="row-name">душ вечером</div>
+          <button class="edit-text-btn">Редактировать</button>
+        </div>
+        <div class="row">
+          <svg class="drag-handle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+          <div class="row-name">почистить зубы вечером</div>
+          <button class="edit-text-btn">Редактировать</button>
+        </div>
+        <div class="row">
+          <svg class="drag-handle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+          <div class="row-name">шарик и иголки вечером</div>
+          <button class="edit-text-btn">Редактировать</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <header class="section-header" onclick="this.closest('.section').classList.toggle('collapsed')">
+        <div class="section-title">Другие</div>
+        <span class="section-count">4</span>
+        <svg class="section-collapse" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+      </header>
+      <div class="habit-list">
+        <div class="row">
+          <svg class="drag-handle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+          <div class="row-name">pixverse</div>
+          <button class="edit-text-btn">Редактировать</button>
+        </div>
+        <div class="row">
+          <svg class="drag-handle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+          <div class="row-name">veo 3</div>
+          <button class="edit-text-btn">Редактировать</button>
+        </div>
+        <div class="row">
+          <svg class="drag-handle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+          <div class="row-name">тик ток стрики</div>
+          <button class="edit-text-btn">Редактировать</button>
+        </div>
+        <div class="row">
+          <svg class="drag-handle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+          <div class="row-name">дуолинго стрик</div>
+          <button class="edit-text-btn">Редактировать</button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+</div>
+
+<script>
+  function switchDay(btn, dayName, date) {
+    document.querySelectorAll('.week-tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('day-name').textContent = dayName;
+    document.getElementById('day-date').textContent = date;
+  }
+</script>
+
+</body>
+</html>

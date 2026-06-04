@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Flexora — Календарь месяца</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  :root {
+    --bg: #0a0b12;
+    --bg-modal: #0f111a;
+    --surface: #161924;
+    --border: #1d2030;
+    --border-strong: #252938;
+    --text: #e7e9f0;
+    --text-muted: #8b8fa3;
+    --text-subtle: #6b7080;
+    --accent: #4a90ff;
+    --accent-soft: rgba(74, 144, 255, 0.15);
+    --accent-border: rgba(74, 144, 255, 0.5);
+    --red-soft: rgba(220, 70, 70, 0.18);
+    --red-border: rgba(220, 70, 70, 0.4);
+    --red: #e07070;
+    --orange-soft: rgba(255, 165, 70, 0.18);
+    --orange-border: rgba(255, 165, 70, 0.4);
+    --orange: #ffae5c;
+    --green-soft: rgba(70, 200, 110, 0.18);
+    --green-border: rgba(70, 200, 110, 0.4);
+    --green: #5cd07e;
+    --flame: #ff8a3d;
+    --star: #ffd24c;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    min-height: 100vh;
+  }
+
+  .backdrop {
+    position: fixed; inset: 0;
+    background: rgba(5, 6, 11, 0.6);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+
+  /* Hint background */
+  .hint-bg {
+    position: fixed; inset: 0;
+    opacity: 0.18;
+    background:
+      radial-gradient(circle at 20% 30%, #1c2540 0%, transparent 45%),
+      radial-gradient(circle at 80% 70%, #2a1c40 0%, transparent 50%),
+      var(--bg);
+    z-index: -1;
+  }
+
+  .modal {
+    width: 100%;
+    max-width: 520px;
+    background: var(--bg-modal);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    box-shadow: 0 24px 80px -16px rgba(0, 0, 0, 0.6), 0 8px 24px -8px rgba(0, 0, 0, 0.4);
+    padding: 24px;
+    max-height: 92vh;
+    overflow-y: auto;
+  }
+
+  /* Header */
+  .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .modal-title {
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+  .close-btn {
+    padding: 6px 14px;
+    border-radius: 999px;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: inherit;
+  }
+  .close-btn:hover {
+    background: var(--surface);
+    border-color: var(--border-strong);
+  }
+
+  /* Month nav */
+  .month-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 4px;
+  }
+  .nav-arrow {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .nav-arrow:hover {
+    background: var(--border);
+    color: var(--text);
+  }
+  .month-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: -0.01em;
+  }
+
+  .swipe-hint {
+    font-size: 11.5px;
+    color: var(--text-subtle);
+    text-align: center;
+    margin-top: 8px;
+    margin-bottom: 16px;
+  }
+
+  /* Weekday headers */
+  .weekday-row {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 6px;
+    margin-bottom: 8px;
+  }
+  .weekday {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-subtle);
+    text-align: center;
+    padding: 4px 0;
+    letter-spacing: 0.05em;
+  }
+
+  /* Calendar grid */
+  .calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 6px;
+  }
+  .day-cell {
+    aspect-ratio: 1;
+    border-radius: 9px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    padding: 6px 6px 4px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .day-cell:hover {
+    transform: translateY(-1px);
+    border-color: var(--border-strong);
+  }
+  .day-cell .day-num {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--text);
+    margin-top: 1px;
+  }
+  .day-cell .day-flame {
+    color: var(--text-subtle);
+    opacity: 0.45;
+  }
+
+  /* States */
+  .day-cell.empty {
+    background: var(--surface);
+    border-color: var(--border);
+  }
+  .day-cell.empty .day-num { color: var(--text-subtle); }
+
+  .day-cell.red {
+    background: var(--red-soft);
+    border-color: var(--red-border);
+  }
+  .day-cell.red .day-flame { color: var(--red); opacity: 0.9; }
+
+  .day-cell.orange {
+    background: var(--orange-soft);
+    border-color: var(--orange-border);
+  }
+  .day-cell.orange .day-flame { color: var(--orange); opacity: 0.9; }
+
+  .day-cell.green {
+    background: var(--green-soft);
+    border-color: var(--green-border);
+  }
+  .day-cell.green .day-flame { color: var(--green); opacity: 0.95; }
+
+  .day-cell.future {
+    background: transparent;
+    border-color: var(--border);
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+  .day-cell.future:hover { transform: none; }
+  .day-cell.future .day-num { color: var(--text-subtle); }
+
+  .day-cell.other-month {
+    background: transparent;
+    border-color: rgba(36, 41, 56, 0.5);
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+  .day-cell.other-month:hover { transform: none; }
+  .day-cell.other-month .day-num { color: var(--text-subtle); font-weight: 500; }
+
+  .day-cell.today {
+    box-shadow: 0 0 0 2px var(--accent-border), 0 0 16px rgba(74, 144, 255, 0.25);
+  }
+
+  /* Special day star */
+  .star-mark {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    color: var(--star);
+    width: 10px;
+    height: 10px;
+  }
+
+  /* Legend */
+  .legend {
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12.5px;
+    color: var(--text-muted);
+  }
+  .legend-swatch {
+    width: 14px;
+    height: 14px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .legend-swatch.red    { background: var(--red-soft);    border-color: var(--red-border); }
+  .legend-swatch.orange { background: var(--orange-soft); border-color: var(--orange-border); }
+  .legend-swatch.green  { background: var(--green-soft);  border-color: var(--green-border); }
+  .legend-swatch.empty  { background: var(--surface);     border-color: var(--border); }
+  .legend-swatch.star {
+    background: transparent;
+    border: none;
+    color: var(--star);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .legend-note {
+    font-size: 11.5px;
+    color: var(--text-subtle);
+    font-style: italic;
+    margin-top: 4px;
+  }
+</style>
+</head>
+<body>
+
+<div class="hint-bg"></div>
+
+<div class="backdrop">
+  <div class="modal">
+
+    <!-- Header -->
+    <header class="modal-header">
+      <div class="modal-title">Календарь месяца</div>
+      <button class="close-btn">Закрыть</button>
+    </header>
+
+    <!-- Month nav -->
+    <div class="month-nav">
+      <button class="nav-arrow" title="Предыдущий месяц">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+      </button>
+      <div class="month-title">июнь 2026 г.</div>
+      <button class="nav-arrow" title="Следующий месяц">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+      </button>
+    </div>
+
+    <div class="swipe-hint">Свайп влево или вправо — другой месяц</div>
+
+    <!-- Weekday headers -->
+    <div class="weekday-row">
+      <div class="weekday">ПН</div>
+      <div class="weekday">ВТ</div>
+      <div class="weekday">СР</div>
+      <div class="weekday">ЧТ</div>
+      <div class="weekday">ПТ</div>
+      <div class="weekday">СБ</div>
+      <div class="weekday">ВС</div>
+    </div>
+
+    <!-- Calendar grid: June 2026 — Mon = June 1 -->
+    <div class="calendar-grid">
+      <!-- Week 1: 1-7 -->
+      <div class="day-cell orange">
+        <span class="day-num">1</span>
+        <svg class="day-flame" width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
+      </div>
+      <div class="day-cell red">
+        <svg class="star-mark" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        <span class="day-num">2</span>
+        <svg class="day-flame" width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
+      </div>
+      <div class="day-cell red today">
+        <span class="day-num">3</span>
+        <svg class="day-flame" width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
+      </div>
+      <div class="day-cell future"><span class="day-num">4</span><svg class="day-flame" width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg></div>
+      <div class="day-cell future"><span class="day-num">5</span><svg class="day-flame" width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg></div>
+      <div class="day-cell future"><span class="day-num">6</span><svg class="day-flame" width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg></div>
+      <div class="day-cell future"><span class="day-num">7</span><svg class="day-flame" width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg></div>
+
+      <!-- Week 2: 8-14 -->
+      <div class="day-cell future"><span class="day-num">8</span><svg class="day-flame" width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg></div>
+      <div class="day-cell future"><span class="day-num">9</span><svg class="day-flame" width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg></div>
+      <div class="day-cell future"><span class="day-num">10</span><svg class="day-flame" width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg></div>
+      <div class="day-cell future"><span class="day-num">11</span><svg class="day-flame" width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg></div>
+      <div class="day-cell future"><span class="day-num">12</span><svg class="day-flame" width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg></div>
+      <div class="day-cell future"><span class="day-num">13</span><svg class="day-flame" width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg></div>
+      <div class="day-cell future"><span class="day-num">14</span><svg class="day-flame" width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg></div>
+
+      <!-- Week 3: 15-21 -->
+      <div class="day-cell future"><span class="day-num">15</span><svg class="day-flame" width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg></div>
+      <div class="day-cell future"><span class="day-num">16</span><svg class="day-flame" width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg></div>
+      <div class="day-cell future"><span class="day-num">17</span><svg class="day-flame" width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg></div>
+      <div class="day-cell future"><span class="day-num">18</span><svg class="day-flame" width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg></div>
+      <div class="day-cell future"><span class="day-num">19</span><svg class="day-flame" width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg></div>
+      <div class="day-cell future"><span class="day-num">20</span><svg class="day-flame" width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg></div>
+      <div class="day-cell future"><span class="day-num">21</span><svg class="day-flame" width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg></div>
+
+      <!-- Week 4: 22-28 -->
+      <div class="day-cell future"><span class="day-num">22</span><svg class="day-flame" width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg></div>
+      <div class="day-cell future"><span class="day-num">23</span><svg class="day-flame" width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg></div>
+      <div class="day-cell future"><span class="day-num">24</span><svg class="day-flame" width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg></div>
+      <div class="day-cell future"><span class="day-num">25</span><svg class="day-flame" width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg></div>
+      <div class="day-cell future"><span class="day-num">26</span><svg class="day-flame" width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg></div>
+      <div class="day-cell future"><span class="day-num">27</span><svg class="day-flame" width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg></div>
+      <div class="day-cell future"><span class="day-num">28</span><svg class="day-flame" width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg></div>
+
+      <!-- Week 5: 29-30 (June), 1-5 (July) -->
+      <div class="day-cell future"><span class="day-num">29</span><svg class="day-flame" width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg></div>
+      <div class="day-cell future"><span class="day-num">30</span><svg class="day-flame" width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg></div>
+      <div class="day-cell other-month"><span class="day-num">1</span></div>
+      <div class="day-cell other-month"><span class="day-num">2</span></div>
+      <div class="day-cell other-month"><span class="day-num">3</span></div>
+      <div class="day-cell other-month"><span class="day-num">4</span></div>
+      <div class="day-cell other-month"><span class="day-num">5</span></div>
+
+      <!-- Week 6: 6-12 (July) -->
+      <div class="day-cell other-month"><span class="day-num">6</span></div>
+      <div class="day-cell other-month"><span class="day-num">7</span></div>
+      <div class="day-cell other-month"><span class="day-num">8</span></div>
+      <div class="day-cell other-month"><span class="day-num">9</span></div>
+      <div class="day-cell other-month"><span class="day-num">10</span></div>
+      <div class="day-cell other-month"><span class="day-num">11</span></div>
+      <div class="day-cell other-month"><span class="day-num">12</span></div>
+    </div>
+
+    <!-- Legend -->
+    <div class="legend">
+      <div class="legend-item">
+        <span class="legend-swatch red"></span>
+        <span>0–50% выполнения</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-swatch orange"></span>
+        <span>50–99% выполнения</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-swatch green"></span>
+        <span>100% — идеальный день</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-swatch empty"></span>
+        <span>Нет задач в плане</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-swatch star">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        </span>
+        <span>Особый день</span>
+      </div>
+      <div class="legend-note">Будущие дни неактивны</div>
+    </div>
+
+  </div>
+</div>
+
+</body>
+</html>

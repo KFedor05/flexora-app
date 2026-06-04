@@ -1,0 +1,48 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Dependencies
+node_modules
+
+# Build output
+dist
+dist-ssr
+*.local
+
+# Rust / Tauri
+src-tauri/target
+src-tauri/gen
+# Note: src-tauri/Cargo.lock IS committed (binary crate — reproducible builds).
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS
+Thumbs.db
+
+# Claude Code local config
+.claude/
+
+# User-created backup / export files kept in repo while testing
+flexora-backup-*.json
+exxs/
+
+# Icon working files (intermediate crops/masks). Source-of-truth is src-tauri/icon-source.{png,svg}
+icon-work/
+app-icon.png
+ChatGPT Image*.png
+*:Zone.Identifier

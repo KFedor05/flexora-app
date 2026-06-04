@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1024" y2="1024" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#4a90ff"/>
+      <stop offset="1" stop-color="#3b7eee"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Rounded square background -->
+  <rect x="0" y="0" width="1024" height="1024" rx="200" fill="url(#bg)"/>
+
+  <!-- Letter F constructed from three rounded rectangles -->
+  <g fill="#ffffff">
+    <!-- Vertical stem -->
+    <rect x="320" y="230" width="140" height="564" rx="30"/>
+    <!-- Top horizontal arm -->
+    <rect x="320" y="230" width="450" height="140" rx="30"/>
+    <!-- Middle horizontal arm (shorter) -->
+    <rect x="320" y="465" width="340" height="120" rx="28"/>
+  </g>
+</svg>
