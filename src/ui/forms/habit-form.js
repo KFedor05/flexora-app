@@ -145,82 +145,87 @@ export function openHabitForm({ kind: kindArg, habit = null, sections = [], onSa
   titleInput.addEventListener("input", () => {
     state.title = titleInput.value;
   });
-  const sectionNewWrap = $("[data-field=sectionNewWrap]");
-  const sectionNewInput = $("[data-field=sectionNewName]");
-  const sectionNewCreateBtn = $("[data-action=section-new-create]");
-  const sectionNewCancelBtn = $("[data-action=section-new-cancel]");
-  let prevSectionId = state.sectionId;
+  // Section UI is not rendered for counters (they don't belong to a section
+  // visually), so skip wiring everything section-related when !sectionSelect.
+  if (sectionSelect) {
+    const sectionNewWrap = $("[data-field=sectionNewWrap]");
+    const sectionNewInput = $("[data-field=sectionNewName]");
+    const sectionNewCreateBtn = $("[data-action=section-new-create]");
+    const sectionNewCancelBtn = $("[data-action=section-new-cancel]");
+    let prevSectionId = state.sectionId;
 
-  function showSectionInput() {
-    sectionNewWrap.classList.remove("is-hidden");
-    sectionNewInput.value = "";
-    sectionNewInput.focus();
-  }
-  function hideSectionInput() {
-    sectionNewWrap.classList.add("is-hidden");
-    sectionNewInput.value = "";
-  }
-  function selectSection(id) {
-    state.sectionId = id;
-    sectionSelect.value = id;
-    prevSectionId = id;
-  }
+    const showSectionInput = () => {
+      sectionNewWrap.classList.remove("is-hidden");
+      sectionNewInput.value = "";
+      sectionNewInput.focus();
+    };
+    const hideSectionInput = () => {
+      sectionNewWrap.classList.add("is-hidden");
+      sectionNewInput.value = "";
+    };
+    const selectSection = (id) => {
+      state.sectionId = id;
+      sectionSelect.value = id;
+      prevSectionId = id;
+    };
 
-  sectionSelect.addEventListener("change", () => {
-    if (sectionSelect.value === "__new__") {
-      showSectionInput();
-      sectionSelect.value = prevSectionId; // visual revert until created
-    } else {
+    sectionSelect.addEventListener("change", () => {
+      if (sectionSelect.value === "__new__") {
+        showSectionInput();
+        sectionSelect.value = prevSectionId; // visual revert until created
+      } else {
+        hideSectionInput();
+        state.sectionId = sectionSelect.value;
+        prevSectionId = state.sectionId;
+      }
+    });
+
+    sectionNewCancelBtn.addEventListener("click", (e) => {
+      e.preventDefault();
       hideSectionInput();
-      state.sectionId = sectionSelect.value;
-      prevSectionId = state.sectionId;
-    }
-  });
+    });
 
-  sectionNewCancelBtn.addEventListener("click", (e) => {
-    e.preventDefault();
-    hideSectionInput();
-  });
+    const commitNewSection = async () => {
+      const name = sectionNewInput.value.trim();
+      if (!name) return;
+      sectionNewCreateBtn.disabled = true;
+      try {
+        const section = await api.createSection(name);
+        sections.push(section);
+        // Rebuild the <option>s and append the sentinel back at the end.
+        const opts = sections
+          .map(
+            (s) =>
+              `<option value="${escapeAttr(s.id)}">${escapeHtml(translateSectionName(s))}</option>`,
+          )
+          .join("");
+        sectionSelect.innerHTML =
+          opts +
+          `<option value="__new__">${escapeHtml(t("habit.fields.sectionNewOption"))}</option>`;
+        selectSection(section.id);
+        hideSectionInput();
+      } catch (err) {
+        console.error("create section failed", err);
+        alert(String(err));
+      } finally {
+        sectionNewCreateBtn.disabled = false;
+      }
+    };
 
-  async function commitNewSection() {
-    const name = sectionNewInput.value.trim();
-    if (!name) return;
-    sectionNewCreateBtn.disabled = true;
-    try {
-      const section = await api.createSection(name);
-      sections.push(section);
-      // Rebuild the <option>s and append the sentinel back at the end.
-      const opts = sections
-        .map(
-          (s) =>
-            `<option value="${escapeAttr(s.id)}">${escapeHtml(translateSectionName(s))}</option>`,
-        )
-        .join("");
-      sectionSelect.innerHTML =
-        opts + `<option value="__new__">${escapeHtml(t("habit.fields.sectionNewOption"))}</option>`;
-      selectSection(section.id);
-      hideSectionInput();
-    } catch (err) {
-      console.error("create section failed", err);
-      alert(String(err));
-    } finally {
-      sectionNewCreateBtn.disabled = false;
-    }
-  }
-
-  sectionNewCreateBtn.addEventListener("click", (e) => {
-    e.preventDefault();
-    commitNewSection();
-  });
-  sectionNewInput.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") {
+    sectionNewCreateBtn.addEventListener("click", (e) => {
       e.preventDefault();
       commitNewSection();
-    } else if (e.key === "Escape") {
-      e.preventDefault();
-      hideSectionInput();
-    }
-  });
+    });
+    sectionNewInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        commitNewSection();
+      } else if (e.key === "Escape") {
+        e.preventDefault();
+        hideSectionInput();
+      }
+    });
+  }
 
   $$("[data-repeat]").forEach((btn) => {
     btn.addEventListener("click", (e) => {
@@ -583,7 +588,10 @@ function validate(state, { isCounter, isEdit, today }) {
   const errs = t("habit.errors", { returnObjects: true });
   if (!state.title.trim()) return errs.titleRequired;
   if (state.title.trim().length > 60) return errs.titleRequired;
-  if (!state.sectionId) return errs.sectionRequired;
+  // Counters don't surface a section in the form — they live in the right
+  // panel, not in section lists — but the backend still needs a sectionId.
+  // We auto-assign a default one in buildInitialState; just don't gate on it.
+  if (!isCounter && !state.sectionId) return errs.sectionRequired;
 
   if (state.frequencyMode === "interval") {
     const n = Number(state.intervalDays);
@@ -594,7 +602,7 @@ function validate(state, { isCounter, isEdit, today }) {
     if (!(typeof state.counterTarget === "number" && state.counterTarget > 0)) {
       return errs.counterTargetInvalid;
     }
-    if (!state.counterUnit.trim()) return errs.counterUnitRequired;
+    // Unit is optional — empty string is fine.
     const validSteps = state.counterSteps
       .map((s) => Number(String(s).replace(",", ".")))
       .filter((n) => Number.isFinite(n) && n > 0);
@@ -669,6 +677,10 @@ function renderForm({ isEdit, isCounter, sections, state }) {
         maxlength="60" value="${escapeAttr(state.title)}" />
     </div>
 
+    ${
+      isCounter
+        ? ""
+        : `
     <div class="field">
       <label class="field-label">${escapeHtml(t("habit.fields.section"))}</label>
       <select class="select" data-field="section">${sectionOptions}<option value="__new__">${escapeHtml(t("habit.fields.sectionNewOption"))}</option></select>
@@ -677,7 +689,8 @@ function renderForm({ isEdit, isCounter, sections, state }) {
         <button type="button" class="btn btn-primary" data-action="section-new-create">${escapeHtml(t("common.create"))}</button>
         <button type="button" class="btn btn-secondary" data-action="section-new-cancel">${escapeHtml(t("common.cancel"))}</button>
       </div>
-    </div>
+    </div>`
+    }
 
     ${counterBlock}
 

@@ -88,7 +88,7 @@
       "typeCheckbox": "Чекбокс",
       "typeCounter": "Счётчик",
       "counterTarget": "Цель",
-      "counterUnit": "Единица",
+      "counterUnit": "Единица (необязательно)",
       "counterUnitPlaceholder": "раз, мл, стр.…",
       "steps": "Шаги (1–5)",
       "stepsHint": "Каждый шаг — пара кнопок +X / −X.",

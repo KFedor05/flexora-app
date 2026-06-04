@@ -88,7 +88,7 @@
       "typeCheckbox": "Checkbox",
       "typeCounter": "Counter",
       "counterTarget": "Goal",
-      "counterUnit": "Unit",
+      "counterUnit": "Unit (optional)",
       "counterUnitPlaceholder": "reps, ml, pages…",
       "steps": "Steps (1–5)",
       "stepsHint": "Each step becomes a pair of +X / −X buttons.",
