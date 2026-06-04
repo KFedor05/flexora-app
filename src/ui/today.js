@@ -303,7 +303,10 @@ function renderCheckboxRow(habit, entry) {
     </button>
   `;
   if (!checkboxNoop) {
-    row.querySelector("[data-action=toggle]").addEventListener("click", async () => {
+    // Whole-row click toggles the entry. Click on the star (freeze button)
+    // is handled by its own listener below and stops propagation so it
+    // doesn't double-fire as a row-click toggle.
+    row.addEventListener("click", async () => {
       try {
         state.day = await api.toggleEntry(state.date, habit.id);
         render();
@@ -312,6 +315,7 @@ function renderCheckboxRow(habit, entry) {
         alert(String(err));
       }
     });
+    row.style.cursor = "pointer";
   }
   if (!future) {
     row.querySelector("[data-action=freeze]").addEventListener("click", async (e) => {
