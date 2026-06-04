@@ -7,6 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.6] - 2026-06-04
+
+### Fixed
+
+- **Drag-drop on Windows:** habit / counter / section drag was broken on
+  Windows in 1.0.5 because SortableJS defaults to the native HTML5 drag
+  API, which doesn't behave reliably in WebView2 (especially for
+  cross-list moves via the `group` option — captured items would darken
+  but never move). Switched every Sortable instance to its pointer-based
+  fallback (`forceFallback: true` + `fallbackOnBody` for cross-list ones),
+  so drag now behaves identically across Linux, Windows, and macOS.
+- **"Mark as special day" no longer erases today's streak growth:**
+  previously, marking a day as special promoted every habit's status to
+  `Skipped` for streak purposes, so habits you'd already completed today
+  stopped counting as Done and their streaks dropped by one. Now special
+  day only freezes Pending / missing entries — already-Done entries keep
+  growing the streak.
+
+### Changed
+
+- **GitHub release body now shows the actual changelog section** for the
+  version being released, not a generic "see the changelog" pointer. CI
+  extracts the matching block from `CHANGELOG.md` and substitutes it into
+  the release description, with the download links rendered below.
+- **CI Node bumped from 20 to 22 (LTS)** in both `ci.yml` and `release.yml`
+  to clear the deprecation warnings GitHub Actions has been printing on
+  Node 20 jobs.
+
 ## [1.0.5] - 2026-06-04
 
 ### Fixed

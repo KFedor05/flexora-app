@@ -1,7 +1,7 @@
 {
   "name": "flexora",
   "private": true,
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "Cross-platform habit tracker with streaks",
   "author": "Flexora contributors",
   "license": "MIT",

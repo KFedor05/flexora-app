@@ -1,6 +1,6 @@
 [package]
 name = "flexora"
-version = "1.0.5"
+version = "1.0.6"
 description = "Cross-platform habit tracker with streaks"
 authors = ["Flexora contributors"]
 edition = "2021"

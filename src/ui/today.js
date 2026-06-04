@@ -438,6 +438,8 @@ function renderExpandedPanel() {
   Sortable.create(list, {
     animation: 150,
     handle: ".counter-card-name",
+    forceFallback: true,
+    fallbackTolerance: 5,
     onEnd: (evt) => {
       if (evt.oldIndex === evt.newIndex) return;
       const orderedIds = Array.from(list.querySelectorAll("[data-habit-id]")).map(

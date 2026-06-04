@@ -70,14 +70,25 @@ fn entry_status(data: &AppData, date: NaiveDate, habit_id: &str) -> EntryStatus 
     let Some(day) = data.days.get(&key) else {
         return EntryStatus::Pending;
     };
-    if day.skipped_whole_day {
-        return EntryStatus::Skipped;
-    }
-    day.entries
+    let stored = day
+        .entries
         .iter()
         .find(|e| e.habit_id == habit_id)
-        .map(|e| e.status)
-        .unwrap_or(EntryStatus::Pending)
+        .map(|e| e.status);
+    // "Mark as special day" freezes whatever wasn't done — it must NOT
+    // demote already-Done entries to Skipped, otherwise today's streak
+    // growth would be erased the moment the user marks the day special.
+    match stored {
+        Some(EntryStatus::Done) => EntryStatus::Done,
+        Some(EntryStatus::Skipped) => EntryStatus::Skipped,
+        Some(EntryStatus::Pending) | None => {
+            if day.skipped_whole_day {
+                EntryStatus::Skipped
+            } else {
+                EntryStatus::Pending
+            }
+        }
+    }
 }
 
 /// Update `data.streaks[habit_id]` for the given habit.

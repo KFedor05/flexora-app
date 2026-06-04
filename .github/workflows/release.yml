@@ -36,7 +36,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
 
       - name: Install Rust toolchain
@@ -65,6 +65,26 @@ jobs:
       - name: Install npm dependencies
         run: npm ci
 
+      # Pull the section for this version out of CHANGELOG.md so the GitHub
+      # release page shows the actual list of changes instead of a generic
+      # "see the changelog" pointer. Falls back to an empty string if the
+      # section is missing (release body still has the download links below).
+      - name: Extract changelog section
+        id: changelog
+        shell: bash
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          SECTION=$(awk -v v="$VERSION" '
+            $0 ~ "^## \\["v"\\]" {flag=1; next}
+            flag && /^## \[/ {exit}
+            flag {print}
+          ' CHANGELOG.md)
+          {
+            echo "body<<CHANGELOG_EOF"
+            echo "$SECTION"
+            echo "CHANGELOG_EOF"
+          } >> "$GITHUB_OUTPUT"
+
       - name: Build Tauri bundles and create draft release
         uses: tauri-apps/tauri-action@v0
         env:
@@ -73,9 +93,11 @@ jobs:
           tagName: ${{ github.ref_name }}
           releaseName: "Flexora ${{ github.ref_name }}"
           releaseBody: |
-            Flexora ${{ github.ref_name }}
+            ${{ steps.changelog.outputs.body }}
 
-            Download the build for your platform below.
+            ---
+
+            ## Downloads
 
             - **Windows:** `.exe` installer (NSIS) or `.msi`
             - **macOS:** `.dmg` (universal — Apple Silicon + Intel)
@@ -83,8 +105,6 @@ jobs:
 
             > Windows: SmartScreen may warn on first launch because the build is not code-signed.
             > Click "More info" → "Run anyway". Code signing is planned for a later release.
-
-            See the changelog for what's new.
           releaseDraft: true
           prerelease: false
           args: ${{ matrix.args }}

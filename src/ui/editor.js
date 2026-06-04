@@ -119,6 +119,8 @@ function renderFlat(container) {
   Sortable.create(list, {
     handle: ".section-drag-handle",
     animation: 150,
+    forceFallback: true,
+    fallbackTolerance: 5,
     onEnd: (evt) => {
       if (evt.oldIndex === evt.newIndex) return;
       onSectionsReorder(
@@ -133,6 +135,9 @@ function renderFlat(container) {
       group: "habits",
       handle: ".drag-handle",
       animation: 150,
+      forceFallback: true,
+      fallbackTolerance: 5,
+      fallbackOnBody: true,
       onEnd: (evt) => onHabitDrop(evt),
     });
   });
@@ -141,6 +146,8 @@ function renderFlat(container) {
     Sortable.create(counterListEl, {
       handle: ".drag-handle",
       animation: 150,
+      forceFallback: true,
+      fallbackTolerance: 5,
       onEnd: (evt) => onCounterDropInByDays(evt),
     });
   });
@@ -318,6 +325,9 @@ function renderByDays(container) {
       group: "habits-byday",
       handle: ".drag-handle",
       animation: 150,
+      forceFallback: true,
+      fallbackTolerance: 5,
+      fallbackOnBody: true,
       onEnd: (evt) => onHabitDropInByDays(evt),
     });
   });
@@ -325,6 +335,8 @@ function renderByDays(container) {
     Sortable.create(counterListEl, {
       handle: ".drag-handle",
       animation: 150,
+      forceFallback: true,
+      fallbackTolerance: 5,
       onEnd: (evt) => onCounterDropInByDays(evt),
     });
   });
