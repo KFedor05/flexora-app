@@ -171,17 +171,25 @@ fn build_day_brief(data: &AppData, date: NaiveDate) -> DayBrief {
     let stored = data.days.get(&date.to_string());
     let skipped_whole_day = stored.is_some_and(|d| d.skipped_whole_day);
 
-    let total = data
+    let active_ids: std::collections::HashSet<&str> = data
         .habits
         .iter()
         .filter(|h| habit_active_on(h, date))
-        .count() as u32;
+        .map(|h| h.id.as_str())
+        .collect();
+    let total = active_ids.len() as u32;
 
+    // Same filter as recompute_day_status: ignore stored entries whose habits
+    // are no longer active on this date (e.g. habit was completed / its
+    // frequency narrowed after the entry was recorded).
     let (done, skipped) = match stored {
         Some(day) => {
             let mut d = 0u32;
             let mut s = 0u32;
             for e in &day.entries {
+                if !active_ids.contains(e.habit_id.as_str()) {
+                    continue;
+                }
                 match e.status {
                     EntryStatus::Done => d += 1,
                     EntryStatus::Skipped => s += 1,
@@ -304,14 +312,23 @@ pub fn recompute_day_status(data: &mut AppData, date: NaiveDate) -> DayStatus {
         let Some(day) = data.days.get(&key) else {
             return DayStatus::Empty;
         };
-        let total_active = data
+        let active_ids: std::collections::HashSet<&str> = data
             .habits
             .iter()
             .filter(|h| habit_active_on(h, date))
-            .count() as u32;
+            .map(|h| h.id.as_str())
+            .collect();
+        let total_active = active_ids.len() as u32;
+        // Only count progress for entries that belong to currently active
+        // habits. Otherwise a habit that went inactive after a stored entry
+        // (completed mid-day, frequency narrowed) would inflate `done` above
+        // `total_active` and the day would never reach Perfect.
         let mut done = 0u32;
         let mut skipped = 0u32;
         for e in &day.entries {
+            if !active_ids.contains(e.habit_id.as_str()) {
+                continue;
+            }
             match e.status {
                 EntryStatus::Done => done += 1,
                 EntryStatus::Skipped => skipped += 1,
@@ -372,9 +389,11 @@ pub fn habit_active_on(habit: &Habit, date: NaiveDate) -> bool {
         }
     }
     if habit.completed {
-        // Completed habits should still appear for past dates up to completedAt.
+        // Completed habits still appear on past dates (so history stays
+        // intact) but disappear from the day they were completed onward —
+        // pressing "Complete" should remove the habit from Today right away.
         if let Some(completed_at) = habit.completed_at {
-            if date > completed_at.date_naive() {
+            if date >= completed_at.date_naive() {
                 return false;
             }
         } else {

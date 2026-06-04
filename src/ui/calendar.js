@@ -127,6 +127,14 @@ async function renderMonth() {
         .join("")}
     </div>
     <div class="calendar-grid"></div>
+    <ul class="cal-legend">
+      <li><span class="cal-legend-swatch cal-legend-red"></span>${escape(t("calendar.legendRed"))}</li>
+      <li><span class="cal-legend-swatch cal-legend-orange"></span>${escape(t("calendar.legendOrange"))}</li>
+      <li><span class="cal-legend-swatch cal-legend-green"></span>${escape(t("calendar.legendGreen"))}</li>
+      <li><span class="cal-legend-swatch cal-legend-empty"></span>${escape(t("calendar.legendEmpty"))}</li>
+      <li><span class="cal-legend-star">${STAR_FILLED}</span>${escape(t("calendar.legendStar"))}</li>
+      <li class="cal-legend-note">${escape(t("calendar.legendFuture"))}</li>
+    </ul>
     <div class="cal-actions">
       <button type="button" class="btn btn-secondary" data-action="today">${escape(t("calendar.gotoToday"))}</button>
     </div>

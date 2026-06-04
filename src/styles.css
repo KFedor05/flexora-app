@@ -300,6 +300,19 @@ body {
   gap: 10px;
   margin-left: auto;
 }
+.modal-footer-left {
+  display: flex;
+  gap: 10px;
+}
+.confirm-body {
+  padding: 4px 0 8px;
+}
+.confirm-message {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text);
+}
 
 /* ============================================================
    Forms
@@ -1739,6 +1752,63 @@ input[type="date"].input {
 .cal-nav-arrow:disabled {
   opacity: 0.35;
   cursor: not-allowed;
+}
+.cal-legend {
+  list-style: none;
+  margin: 16px 0 0;
+  padding: 12px 4px 0;
+  border-top: 1px solid var(--border);
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px 16px;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+.cal-legend li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.cal-legend-swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+  flex-shrink: 0;
+  border: 1px solid transparent;
+}
+.cal-legend-red {
+  background: rgba(220, 70, 70, 0.22);
+  border-color: rgba(220, 70, 70, 0.5);
+}
+.cal-legend-orange {
+  background: rgba(255, 165, 70, 0.22);
+  border-color: rgba(255, 165, 70, 0.5);
+}
+.cal-legend-green {
+  background: rgba(70, 200, 110, 0.22);
+  border-color: rgba(70, 200, 110, 0.5);
+}
+.cal-legend-empty {
+  background: transparent;
+  border-color: var(--border);
+}
+.cal-legend-star {
+  width: 14px;
+  height: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffd24c;
+  flex-shrink: 0;
+}
+.cal-legend-star svg {
+  width: 12px;
+  height: 12px;
+}
+.cal-legend-note {
+  grid-column: 1 / -1;
+  font-style: italic;
+  opacity: 0.7;
 }
 .calendar-body .month-title {
   font-size: 16px;

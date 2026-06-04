@@ -137,3 +137,56 @@ export function buildFooter({ primary, secondary, left }) {
 
   return footer;
 }
+
+// Lightweight Yes/No confirmation. Returns a Promise<boolean> that resolves
+// with true on confirm, false on cancel / Esc / backdrop / close.
+//   title       — short heading
+//   message     — body text (one paragraph)
+//   confirmLabel — text on the destructive button (default: "Delete")
+//   cancelLabel  — text on cancel button (default: "Cancel")
+//   destructive  — when true (default), confirm button uses btn-danger
+export function openConfirm({
+  title,
+  message,
+  confirmLabel = "Delete",
+  cancelLabel = "Cancel",
+  destructive = true,
+}) {
+  return new Promise((resolve) => {
+    let settled = false;
+    const finish = (val) => {
+      if (settled) return;
+      settled = true;
+      resolve(val);
+      ctl.close();
+    };
+
+    const body = document.createElement("div");
+    body.className = "confirm-body";
+    const p = document.createElement("p");
+    p.className = "confirm-message";
+    p.textContent = message;
+    body.appendChild(p);
+
+    const cancelBtn = document.createElement("button");
+    cancelBtn.type = "button";
+    cancelBtn.className = "btn btn-secondary";
+    cancelBtn.textContent = cancelLabel;
+    cancelBtn.addEventListener("click", () => finish(false));
+
+    const confirmBtn = document.createElement("button");
+    confirmBtn.type = "button";
+    confirmBtn.className = destructive ? "btn btn-danger" : "btn btn-primary";
+    confirmBtn.textContent = confirmLabel;
+    confirmBtn.addEventListener("click", () => finish(true));
+
+    const footer = buildFooter({ primary: confirmBtn, secondary: cancelBtn });
+
+    const ctl = openModal({
+      title,
+      body,
+      footer,
+      onClose: () => finish(false),
+    });
+  });
+}

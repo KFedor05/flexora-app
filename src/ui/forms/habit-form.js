@@ -9,7 +9,7 @@
  *     onSaved  — callback(habit) when form successfully saved (create / update / complete)
  */
 
-import { openModal, buildFooter } from "../modal.js";
+import { openModal, openConfirm, buildFooter } from "../modal.js";
 import { applyNumericMask, parseNumber } from "../inputs.js";
 import { t } from "../../i18n/index.js";
 import * as api from "../../api/index.js";
@@ -402,6 +402,16 @@ export function openHabitForm({ kind: kindArg, habit = null, sections = [], onSa
   }
 
   async function complete() {
+    const titleKey = isCounter ? "habit.completeCounterTitle" : "habit.completeTitle";
+    const msgKey = isCounter ? "habit.completeCounterConfirm" : "habit.completeConfirm";
+    const ok = await openConfirm({
+      title: t(titleKey),
+      message: t(msgKey, { name: habit.title }),
+      confirmLabel: t("common.complete"),
+      cancelLabel: t("common.cancel"),
+      destructive: false,
+    });
+    if (!ok) return;
     primaryBtn.disabled = true;
     try {
       const updated = await api.completeHabit(habit.id);

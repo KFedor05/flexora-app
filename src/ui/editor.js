@@ -136,6 +136,14 @@ function renderFlat(container) {
       onEnd: (evt) => onHabitDrop(evt),
     });
   });
+  // Drag-drop counters within their own block.
+  list.querySelectorAll("[data-counters-list]").forEach((counterListEl) => {
+    Sortable.create(counterListEl, {
+      handle: ".drag-handle",
+      animation: 150,
+      onEnd: (evt) => onCounterDropInByDays(evt),
+    });
+  });
 }
 
 function buildSectionElement(section, { mode }) {
@@ -301,16 +309,23 @@ function renderByDays(container) {
   }
   content.appendChild(list);
 
-  // Drag-drop habits within a section in by-days mode.
-  // Cross-section drag is intentionally disabled here — by-days is a schedule
-  // view, not a section-management view. Within a section, dragged habits swap
-  // slots with each other while invisible habits (those not active on the
-  // current weekday) stay anchored at their original positions.
+  // Drag-drop habits between and within sections in by-days mode.
+  // Group "habits-byday" lets habits cross section boundaries — dropping a
+  // habit into another section updates its sectionId. Counters live in
+  // their own Sortable (no cross-list) below.
   list.querySelectorAll("[data-habit-list]").forEach((habitListEl) => {
     Sortable.create(habitListEl, {
+      group: "habits-byday",
       handle: ".drag-handle",
       animation: 150,
       onEnd: (evt) => onHabitDropInByDays(evt),
+    });
+  });
+  list.querySelectorAll("[data-counters-list]").forEach((counterListEl) => {
+    Sortable.create(counterListEl, {
+      handle: ".drag-handle",
+      animation: 150,
+      onEnd: (evt) => onCounterDropInByDays(evt),
     });
   });
 }
@@ -565,36 +580,105 @@ async function onHabitDrop(evt) {
   }
 }
 
-// In by-days mode the visible list is filtered by weekday. We let the user
-// reorder visible habits among themselves; invisible habits (not active on the
-// current weekday) stay anchored at their original positions in the section.
-// Trick: assign visibleNew[i] the order that visibleOld[i] used to have.
+// In by-days mode the visible list is filtered by weekday. The user can drag
+// habits within a section or across sections (cross-section drag changes
+// sectionId). After drop, both source and target sections are renumbered:
+// visible habits in DOM order first, then invisible habits in their previous
+// relative order. This means re-ordering inside one weekday view changes the
+// absolute habit order, which propagates to other weekday views — that's an
+// accepted trade-off for letting drag work the way users expect.
 async function onHabitDropInByDays(evt) {
-  const sectionId = evt.to.dataset.sectionId;
-  const visibleNewIds = Array.from(evt.to.querySelectorAll("[data-habit-id]")).map(
-    (el) => el.dataset.habitId,
-  );
-  const sectionHabits = state.data.habits
-    .filter((h) => h.sectionId === sectionId)
-    .sort((a, b) => a.order - b.order);
-  const visibleOld = sectionHabits.filter((h) => visibleNewIds.includes(h.id));
-
-  if (visibleOld.length !== visibleNewIds.length) {
-    // Sanity check failed — fall back to a full re-number of visible items.
+  const habitId = evt.item.dataset.habitId;
+  const habit = state.data.habits.find((h) => h.id === habitId);
+  if (!habit) {
     await reload();
     return;
   }
-  const slots = visibleOld.map((h) => h.order);
+  const oldSectionId = evt.from.dataset.sectionId;
+  const newSectionId = evt.to.dataset.sectionId;
+  const crossSection = habit.sectionId !== newSectionId;
+
+  // Visible IDs in target / source after the drop, in DOM order.
+  const visibleTargetIds = Array.from(evt.to.querySelectorAll("[data-habit-id]")).map(
+    (el) => el.dataset.habitId,
+  );
+  const visibleSourceIds = crossSection
+    ? Array.from(evt.from.querySelectorAll("[data-habit-id]")).map((el) => el.dataset.habitId)
+    : [];
 
   try {
-    for (let i = 0; i < visibleNewIds.length; i++) {
-      // eslint-disable-next-line no-await-in-loop
-      await api.updateHabit(visibleNewIds[i], { order: slots[i] });
+    if (crossSection) {
+      await api.updateHabit(habitId, { sectionId: newSectionId });
     }
+
+    // Renumber target: visible-in-DOM-order, then invisible (preserved order).
+    await renumberSectionForByDays(newSectionId, visibleTargetIds, habitId);
+
+    // Renumber source (cross-section only — habit X is no longer there).
+    if (crossSection) {
+      await renumberSectionForByDays(oldSectionId, visibleSourceIds, habitId);
+    }
+
     await reload();
   } catch (err) {
     console.error("habit drop (by-days) failed", err);
     await reload();
+  }
+}
+
+// Counter rows live in their own block, always within the same list — no
+// cross-block drops. Same sequential-then-anchored renumbering as habits.
+async function onCounterDropInByDays(evt) {
+  const visibleIds = Array.from(evt.to.querySelectorAll("[data-habit-id]")).map(
+    (el) => el.dataset.habitId,
+  );
+  const allCounters = state.data.habits
+    .filter((h) => h.type === "counter" && !h.archived && !h.completed)
+    .sort((a, b) => a.order - b.order);
+  const visibleSet = new Set(visibleIds);
+  const invisibleCounters = allCounters.filter((h) => !visibleSet.has(h.id));
+
+  try {
+    let nextOrder = 0;
+    for (const id of visibleIds) {
+      // eslint-disable-next-line no-await-in-loop
+      await api.updateHabit(id, { order: nextOrder++ });
+    }
+    for (const h of invisibleCounters) {
+      // eslint-disable-next-line no-await-in-loop
+      await api.updateHabit(h.id, { order: nextOrder++ });
+    }
+    await reload();
+  } catch (err) {
+    console.error("counter drop (by-days) failed", err);
+    await reload();
+  }
+}
+
+// Renumber a section after a by-days drag: visible habits (in DOM order)
+// take orders 0..N-1, invisible habits keep their previous relative order
+// and take orders N..M-1.
+//
+// `draggedHabitId` is the habit that was dragged. We exclude it from the
+// stale state.data.habits lookup because:
+//   - in the TARGET we don't want to double-count it (it's already in
+//     visibleIds and state.data may still have its OLD sectionId)
+//   - in the SOURCE it has already left and shouldn't be renumbered there
+async function renumberSectionForByDays(sectionId, visibleIds, draggedHabitId) {
+  const visibleSet = new Set(visibleIds);
+  const sectionHabits = state.data.habits
+    .filter((h) => h.sectionId === sectionId && h.id !== draggedHabitId)
+    .sort((a, b) => a.order - b.order);
+  const invisible = sectionHabits.filter((h) => !visibleSet.has(h.id));
+
+  let nextOrder = 0;
+  for (const id of visibleIds) {
+    // eslint-disable-next-line no-await-in-loop
+    await api.updateHabit(id, { order: nextOrder++ });
+  }
+  for (const h of invisible) {
+    // eslint-disable-next-line no-await-in-loop
+    await api.updateHabit(h.id, { order: nextOrder++ });
   }
 }
 

@@ -70,6 +70,12 @@ pub fn create_habit(input: HabitInput, state: State<'_, SharedState>) -> CmdResu
                 created_at: Utc::now(),
             };
             data.habits.push(habit.clone());
+            // Adding a habit that's active today bumps `total` for the day,
+            // so a previously perfect day flips to partial — recompute the
+            // perfect-day streak so the UI pill matches reality.
+            let day = today();
+            day_engine::recompute_day_status(data, day);
+            streaks::recompute_perfect_day_streak(data, day);
             Ok(habit)
         })
         .map_err(Into::into)
@@ -90,6 +96,7 @@ pub fn update_habit(
                 .map(|h| h.start_date)
                 .ok_or_else(|| AppError::NotFound(format!("habit {id}")))?;
             validate::validate_habit_patch(data, &patch, start_date, today())?;
+            let patch_changes_activity = patch.frequency.is_some() || patch.end_date.is_some();
 
             let habit = data
                 .habits
@@ -118,7 +125,15 @@ pub fn update_habit(
             if let Some(order) = patch.order {
                 habit.order = order;
             }
-            Ok(habit.clone())
+            let snapshot = habit.clone();
+            // Frequency / end_date can flip which days the habit is active
+            // on, which changes day_status and streaks for every affected
+            // day. Cheaper to skip the recompute when neither changed.
+            if patch_changes_activity {
+                streaks::recompute_all_streaks(data, today());
+                day_engine::recompute_day_status(data, today());
+            }
+            Ok(snapshot)
         })
         .map_err(Into::into)
 }
@@ -133,6 +148,12 @@ pub fn archive_habit(id: String, state: State<'_, SharedState>) -> CmdResult<()>
                 .find(|h| h.id == id)
                 .ok_or_else(|| AppError::NotFound(format!("habit {id}")))?;
             habit.archived = true;
+            // Same shape as complete_habit: archived = inactive, so today's
+            // progress and streaks need a refresh.
+            let day = today();
+            day_engine::recompute_day_status(data, day);
+            streaks::recompute_habit_streak(data, &id, day);
+            streaks::recompute_perfect_day_streak(data, day);
             Ok(())
         })
         .map_err(Into::into)
@@ -149,7 +170,15 @@ pub fn complete_habit(id: String, state: State<'_, SharedState>) -> CmdResult<Ha
                 .ok_or_else(|| AppError::NotFound(format!("habit {id}")))?;
             habit.completed = true;
             habit.completed_at = Some(Utc::now());
-            Ok(habit.clone())
+            let snapshot = habit.clone();
+            // Once the habit goes inactive, today's progress/streaks change:
+            // it leaves `total`, so perfect-day may flip, and its own streak
+            // should freeze at the last completed date before today.
+            let day = today();
+            day_engine::recompute_day_status(data, day);
+            streaks::recompute_habit_streak(data, &id, day);
+            streaks::recompute_perfect_day_streak(data, day);
+            Ok(snapshot)
         })
         .map_err(Into::into)
 }

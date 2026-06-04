@@ -7,6 +7,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.5] - 2026-06-04
+
+### Fixed
+
+- **Completed habits / counters disappear from Today immediately:** pressing
+  "Complete" now removes the habit (or counter) from the Today list and the
+  right-hand counter panel on the same day it was completed, matching the
+  Editor's behaviour. Past dates still show it with its history.
+- **Day status no longer inflated by stale entries:** if a habit went
+  inactive after a stored entry (completed, frequency narrowed, end-date
+  passed), its entry used to keep counting toward `done` while no longer
+  counting toward `total`, leaving the day stuck on "partial" even when
+  every still-active habit was finished. Both the cached day status and the
+  calendar tiles now ignore entries that don't belong to a currently active
+  habit.
+- **Streak pills now refresh after Complete / Create / Edit:** completing a
+  habit, creating a new one, archiving, or changing a habit's frequency or
+  end-date now triggers the same recompute that toggling an entry does, so
+  the streak pill and perfect-day pill match reality without a reload.
+
+### Added
+
+- **Calendar legend:** the calendar modal now lists what each colour means
+  (red / orange / green / empty / special-day star) plus a note that future
+  days are inactive.
+- **Confirm before completing:** clicking "Complete" in the habit / counter
+  form now asks for confirmation, with copy explaining that past entries
+  stay in history but the habit won't appear in Today or Editor anymore.
+
+### Changed
+
+- **Editor by-days view:** habits can now be dragged across sections (not
+  just reordered within one), and counters are draggable in both the
+  by-section and by-days views via their own dedicated list.
+
 ## [1.0.4] - 2026-06-04
 
 ### Changed

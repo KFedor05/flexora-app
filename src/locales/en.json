@@ -78,6 +78,14 @@
     "editTitle": "Edit habit",
     "newCounterTitle": "New counter",
     "editCounterTitle": "Edit counter",
+    "deleteTitle": "Delete habit",
+    "deleteCounterTitle": "Delete counter",
+    "deleteConfirm": "Delete \"{{name}}\"? Past entries stay in your history but the habit won't appear in Today or Editor anymore.",
+    "deleteCounterConfirm": "Delete \"{{name}}\"? Past entries stay in your history but the counter won't appear anymore.",
+    "completeTitle": "Complete habit",
+    "completeCounterTitle": "Complete counter",
+    "completeConfirm": "Complete \"{{name}}\"? It will move to your history and won't appear in Today or Editor anymore. You can still see it on past dates.",
+    "completeCounterConfirm": "Complete \"{{name}}\"? It will move to your history and won't appear anymore. You can still see it on past dates.",
     "fields": {
       "title": "Title",
       "titlePlaceholder": "e.g. morning stretch",
@@ -176,7 +184,13 @@
     "title": "Calendar",
     "prevMonth": "Previous month",
     "nextMonth": "Next month",
-    "gotoToday": "Today"
+    "gotoToday": "Today",
+    "legendRed": "0–50% done",
+    "legendOrange": "50–99% done",
+    "legendGreen": "100% / skipped",
+    "legendEmpty": "Nothing scheduled",
+    "legendStar": "Special day",
+    "legendFuture": "Future days are inactive"
   },
   "nav": {
     "diary": "Diary",
