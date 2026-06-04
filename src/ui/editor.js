@@ -16,6 +16,7 @@ import { openModal, buildFooter } from "./modal.js";
 import { goto } from "./router.js";
 import { t } from "../i18n/index.js";
 import { ICONS } from "./icons.js";
+import { showError } from "./toast.js";
 
 const ALL_WEEKDAYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
 
@@ -360,10 +361,6 @@ function allActiveCounters() {
     .sort((a, b) => a.order - b.order);
 }
 
-function visibleHabits() {
-  return state.data.habits.filter((h) => !h.archived && !h.completed);
-}
-
 function isOnDay(habit, weekday) {
   if (habit.frequency?.type === "byDays") {
     return habit.frequency.days.includes(weekday);
@@ -476,7 +473,7 @@ function openSectionDelete(section) {
   const habits = habitsForSection(section.id);
   const otherSections = state.data.sections.filter((s) => s.id !== section.id);
   if (!otherSections.length) {
-    alert(t("editor.cannotDeleteLastSection"));
+    showError(t("editor.cannotDeleteLastSection"));
     return;
   }
   const defaultTarget = otherSections.find((s) => s.id === "other") || otherSections[0];
@@ -546,7 +543,6 @@ async function onSectionsReorder(sectionIds) {
       const id = sectionIds[i];
       const s = state.data.sections.find((x) => x.id === id);
       if (s && s.order !== i) {
-        // eslint-disable-next-line no-await-in-loop
         await api.updateSection(id, { order: i });
       }
     }
@@ -572,7 +568,6 @@ async function onHabitDrop(evt) {
     }
     // 2) Re-number every habit in the target section.
     for (let i = 0; i < orderedIds.length; i++) {
-      // eslint-disable-next-line no-await-in-loop
       await api.updateHabit(orderedIds[i], { order: i });
     }
     // 3) Also re-number the source section if it was different.
@@ -581,7 +576,6 @@ async function onHabitDrop(evt) {
         (el) => el.dataset.habitId,
       );
       for (let i = 0; i < sourceIds.length; i++) {
-        // eslint-disable-next-line no-await-in-loop
         await api.updateHabit(sourceIds[i], { order: i });
       }
     }
@@ -653,11 +647,9 @@ async function onCounterDropInByDays(evt) {
   try {
     let nextOrder = 0;
     for (const id of visibleIds) {
-      // eslint-disable-next-line no-await-in-loop
       await api.updateHabit(id, { order: nextOrder++ });
     }
     for (const h of invisibleCounters) {
-      // eslint-disable-next-line no-await-in-loop
       await api.updateHabit(h.id, { order: nextOrder++ });
     }
     await reload();
@@ -685,11 +677,9 @@ async function renumberSectionForByDays(sectionId, visibleIds, draggedHabitId) {
 
   let nextOrder = 0;
   for (const id of visibleIds) {
-    // eslint-disable-next-line no-await-in-loop
     await api.updateHabit(id, { order: nextOrder++ });
   }
   for (const h of invisible) {
-    // eslint-disable-next-line no-await-in-loop
     await api.updateHabit(h.id, { order: nextOrder++ });
   }
 }

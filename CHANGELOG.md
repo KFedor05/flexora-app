@@ -7,6 +7,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.7] - 2026-06-04
+
+### Added
+
+- **Toast notifications** in the bottom-right corner replace the system
+  `alert()` popups that used to block the UI on errors. Toasts auto-dismiss
+  after a few seconds, can be closed manually, and pause on hover so long
+  error messages can be read. Used in 7 error handlers across Today,
+  Editor, and the habit / counter form.
+
+### Changed
+
+- **Special day visualises the freeze.** When the day is marked as
+  special, every Pending habit / counter now shows the frozen styling
+  (greyed row, snowflake in the streak pill) and the individual freeze
+  star is disabled with a "frozen by special day" tooltip — because the
+  whole day is already frozen, per-habit toggles don't make sense. You
+  can still click the row / counter buttons to complete a habit; doing so
+  flips the snowflake to a fire and grows the streak as normal.
+- **Settings → Open data folder** now shows the actual filesystem path
+  under the button in a monospaced subline, so you can see where you're
+  about to navigate before clicking.
+
+### Fixed
+
+- **"Open data folder" was rejected by Tauri ACL.** Added
+  `opener:allow-open-path` to the default capability — `default` only
+  permits URLs, not paths. The button works now.
+- **ESLint warnings cleared** (10 → 0): stale `// eslint-disable-next-line
+  no-await-in-loop` directives that became unnecessary after recent
+  refactors, an unused `ICONS` import in `calendar.js`, and the dead
+  `visibleHabits` helper in `editor.js`.
+
 ## [1.0.6] - 2026-06-04
 
 ### Fixed

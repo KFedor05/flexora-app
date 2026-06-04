@@ -13,6 +13,7 @@ import { openModal, openConfirm, buildFooter } from "../modal.js";
 import { applyNumericMask, parseNumber } from "../inputs.js";
 import { t } from "../../i18n/index.js";
 import * as api from "../../api/index.js";
+import { showError as showToastError } from "../toast.js";
 
 const ALL_WEEKDAYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
 
@@ -206,7 +207,7 @@ export function openHabitForm({ kind: kindArg, habit = null, sections = [], onSa
         hideSectionInput();
       } catch (err) {
         console.error("create section failed", err);
-        alert(String(err));
+        showToastError(String(err));
       } finally {
         sectionNewCreateBtn.disabled = false;
       }

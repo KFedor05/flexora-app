@@ -125,6 +125,7 @@ export async function openSettings() {
       <button type="button" class="settings-row settings-row-button" data-action="open-folder">
         <span class="settings-row-label">${escapeHtml(t("settings.data.openFolder"))}</span>
         <span class="settings-row-hint">${escapeHtml(t("settings.data.openFolderHint"))}</span>
+        <span class="settings-row-path" data-slot="data-dir-path">…</span>
       </button>
     </div>
     <div class="settings-status is-hidden" data-slot="data-status"></div>
@@ -213,6 +214,16 @@ export async function openSettings() {
       flashStatus(String(err), "error");
     }
   });
+
+  // Fill in the actual data directory path under the button so the user
+  // can see where they're about to go before clicking.
+  api
+    .dataDir()
+    .then((dir) => {
+      const slot = body.querySelector("[data-slot=data-dir-path]");
+      if (slot) slot.textContent = dir;
+    })
+    .catch(() => {});
 
   function setBusy(btn, busy) {
     btn.disabled = busy;

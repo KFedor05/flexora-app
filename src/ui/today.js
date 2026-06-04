@@ -14,6 +14,7 @@ import { openCalendar } from "./calendar.js";
 import { goto } from "./router.js";
 import { t, i18next } from "../i18n/index.js";
 import { ICONS } from "./icons.js";
+import { showError } from "./toast.js";
 
 const PANEL_STATE_KEY = "flexora.counterPanel";
 const PANEL_AUTOCOLLAPSE_WIDTH = 800;
@@ -229,7 +230,7 @@ function renderDayPill() {
       render();
     } catch (err) {
       console.error("toggleSkipDay failed", err);
-      alert(String(err));
+      showError(String(err));
     }
   });
   return wrap;
@@ -286,19 +287,30 @@ function renderSections(container, entries) {
 
 function renderCheckboxRow(habit, entry) {
   const row = document.createElement("div");
-  const frozen = entry.status === "skipped";
+  const specialDay = !!state.day.skippedWholeDay;
+  // When the day is marked special, every Pending entry is visually
+  // (and streak-wise, in backend) frozen by the day-level skip. Already-Done
+  // entries keep their Done state — the user can still complete things on
+  // a special day, and that completion grows the streak.
+  const frozen = entry.status === "skipped" || (specialDay && entry.status !== "done");
   const future = isFuture();
   row.className = `task-row${entry.status === "done" ? " completed" : ""}${frozen ? " frozen" : ""}${future ? " future" : ""}`;
   row.dataset.habitId = habit.id;
   const checkboxNoop = future;
-  const freezeNoop = future || entry.status === "done";
+  const starDisabled = future || specialDay;
+  const freezeNoop = checkboxNoop || entry.status === "done" || specialDay;
+  const starTitle = future
+    ? t("today.futureDisabled")
+    : specialDay
+      ? t("today.specialDayFrozen")
+      : t(frozen ? "today.unfreeze" : "today.freeze");
   row.innerHTML = `
     <button type="button" class="task-checkbox ${entry.status === "done" ? "checked" : ""}" data-action="toggle" ${checkboxNoop ? "disabled" : ""} aria-label="${escape(t("today.toggle"))}" title="${escape(future ? t("today.futureDisabled") : t("today.toggle"))}">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
     </button>
     <span class="task-name">${escape(habit.title)}</span>
     ${renderStreakPill(habit.id, frozen)}
-    <button type="button" class="star-btn ${frozen ? "active" : ""}" data-action="freeze" ${freezeNoop ? 'data-noop="true"' : ""} ${future ? "disabled" : ""} title="${escape(future ? t("today.futureDisabled") : t(frozen ? "today.unfreeze" : "today.freeze"))}" aria-label="${escape(t(frozen ? "today.unfreeze" : "today.freeze"))}">
+    <button type="button" class="star-btn ${frozen ? "active" : ""}" data-action="freeze" ${freezeNoop ? 'data-noop="true"' : ""} ${starDisabled ? "disabled" : ""} title="${escape(starTitle)}" aria-label="${escape(starTitle)}">
       ${frozen ? ICONS.starFilled : ICONS.star}
     </button>
   `;
@@ -312,7 +324,7 @@ function renderCheckboxRow(habit, entry) {
         render();
       } catch (err) {
         console.error("toggle failed", err);
-        alert(String(err));
+        showError(String(err));
       }
     });
     row.style.cursor = "pointer";
@@ -326,7 +338,7 @@ function renderCheckboxRow(habit, entry) {
         render();
       } catch (err) {
         console.error("freeze failed", err);
-        alert(String(err));
+        showError(String(err));
       }
     });
   }
@@ -460,7 +472,6 @@ function renderExpandedPanel() {
 async function reorderCounters(orderedIds) {
   try {
     for (let i = 0; i < orderedIds.length; i++) {
-      // eslint-disable-next-line no-await-in-loop
       await api.updateHabit(orderedIds[i], { order: i });
     }
     await reload();
@@ -494,7 +505,8 @@ function renderCounterCard(habit, entry) {
     )
     .join("");
 
-  const frozen = entry.status === "skipped";
+  const specialDay = !!state.day.skippedWholeDay;
+  const frozen = entry.status === "skipped" || (specialDay && entry.status !== "done");
   const future = isFuture();
   if (frozen) card.classList.add("frozen");
   if (future) card.classList.add("future");
@@ -519,7 +531,7 @@ function renderCounterCard(habit, entry) {
       <div class="counter-card-name">${escape(habit.title)}</div>
       <div class="counter-card-head-right">
         ${renderStreakPill(habit.id, frozen)}
-        <button type="button" class="star-btn ${frozen ? "active" : ""}" data-action="freeze" ${future || entry.status === "done" ? 'data-noop="true"' : ""} ${future ? "disabled" : ""} title="${escape(future ? t("today.futureDisabled") : t(frozen ? "today.unfreeze" : "today.freeze"))}" aria-label="${escape(t(frozen ? "today.unfreeze" : "today.freeze"))}">
+        <button type="button" class="star-btn ${frozen ? "active" : ""}" data-action="freeze" ${future || entry.status === "done" || specialDay ? 'data-noop="true"' : ""} ${future || specialDay ? "disabled" : ""} title="${escape(future ? t("today.futureDisabled") : specialDay ? t("today.specialDayFrozen") : t(frozen ? "today.unfreeze" : "today.freeze"))}" aria-label="${escape(future ? t("today.futureDisabled") : specialDay ? t("today.specialDayFrozen") : t(frozen ? "today.unfreeze" : "today.freeze"))}">
           ${frozen ? ICONS.starFilled : ICONS.star}
         </button>
         <button type="button" class="counter-edit" data-action="edit" title="${escape(t("common.edit"))}" aria-label="${escape(t("common.edit"))}">${ICONS.pencil}</button>
@@ -544,7 +556,7 @@ function renderCounterCard(habit, entry) {
         render();
       } catch (err) {
         console.error("freeze failed", err);
-        alert(String(err));
+        showError(String(err));
       }
     });
   }
@@ -567,7 +579,7 @@ function renderCounterCard(habit, entry) {
           render();
         } catch (err) {
           console.error(err);
-          alert(String(err));
+          showError(String(err));
         }
       });
     });

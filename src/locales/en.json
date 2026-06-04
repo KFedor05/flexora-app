@@ -172,6 +172,7 @@
     "freeze": "Freeze for a day (keeps the streak)",
     "unfreeze": "Unfreeze",
     "futureDisabled": "Future days cannot be edited",
+    "specialDayFrozen": "Frozen by special day — you can still complete it to grow the streak",
     "markSpecial": "Mark as special day",
     "unmarkSpecial": "Unmark special day",
     "specialDayBadge": "SPECIAL",
