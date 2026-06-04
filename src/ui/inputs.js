@@ -14,9 +14,7 @@ export function applyNumericMask(input, { allowDecimal = true } = {}) {
       s = s.replace(/[^\d.]/g, "");
       const firstDot = s.indexOf(".");
       if (firstDot !== -1) {
-        s =
-          s.slice(0, firstDot + 1) +
-          s.slice(firstDot + 1).replace(/\./g, "");
+        s = s.slice(0, firstDot + 1) + s.slice(firstDot + 1).replace(/\./g, "");
       }
     } else {
       s = s.replace(/\D/g, "");

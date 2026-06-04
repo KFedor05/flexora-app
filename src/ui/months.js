@@ -27,10 +27,7 @@ export async function mountMonths(root, params) {
 }
 
 async function reload() {
-  const [months, appData] = await Promise.all([
-    api.getYear(state.year),
-    api.loadAppData(),
-  ]);
+  const [months, appData] = await Promise.all([api.getYear(state.year), api.loadAppData()]);
   state.months = months;
   state.appData = appData;
   render();
@@ -117,11 +114,13 @@ function render() {
   if (!nextBtn.disabled) nextBtn.addEventListener("click", () => navYear(1));
   header.querySelector("[data-action=today]").addEventListener("click", () => goto("today"));
   header.querySelector("[data-action=by-days]").addEventListener("click", () => goto("editor"));
-  header.querySelector("[data-action=new-habit]").addEventListener("click", () => openHabitForm({
-    kind: "checkbox",
-    sections: state.appData.sections,
-    onSaved: () => reload(),
-  }));
+  header.querySelector("[data-action=new-habit]").addEventListener("click", () =>
+    openHabitForm({
+      kind: "checkbox",
+      sections: state.appData.sections,
+      onSaved: () => reload(),
+    }),
+  );
 }
 
 function renderMonthRow(monthBrief, todayYear, todayMonth) {
@@ -132,15 +131,19 @@ function renderMonthRow(monthBrief, todayYear, todayMonth) {
   row.innerHTML = `
     <span class="day-list-icon">${ICON_FILE}</span>
     <span class="day-list-name strong">${escape(label)}</span>
-    ${isCurrent
-      ? `<span class="today-badge today-badge-row">${escape(t("nav.currentBadge"))}</span>`
-      : `<span class="day-list-stat">
+    ${
+      isCurrent
+        ? `<span class="today-badge today-badge-row">${escape(t("nav.currentBadge"))}</span>`
+        : `<span class="day-list-stat">
           <span class="stat-mini"><span class="stat-dot green"></span>${monthBrief.green}</span>
           <span class="stat-mini"><span class="stat-dot orange"></span>${monthBrief.orange}</span>
           <span class="stat-mini"><span class="stat-dot red"></span>${monthBrief.red}</span>
-        </span>`}
+        </span>`
+    }
   `;
-  row.addEventListener("click", () => goto("days", { year: monthBrief.year, month: monthBrief.month }));
+  row.addEventListener("click", () =>
+    goto("days", { year: monthBrief.year, month: monthBrief.month }),
+  );
   return row;
 }
 
@@ -155,9 +158,7 @@ function navYear(delta) {
 
 function hasHabitInOrBeforeYear(year) {
   const yearEnd = `${year}-12-31`;
-  return (state.appData?.habits ?? []).some(
-    (h) => !h.archived && h.startDate <= yearEnd,
-  );
+  return (state.appData?.habits ?? []).some((h) => !h.archived && h.startDate <= yearEnd);
 }
 
 // Earliest month (1-12) where any non-archived habit was active during the
@@ -191,13 +192,20 @@ function formatMonthYear(year, month) {
 function safeLocale() {
   const c = i18next.language;
   if (!c || c === "C" || c === "POSIX") return "en";
-  try { new Intl.DateTimeFormat(c); return c; } catch { return "en"; }
+  try {
+    new Intl.DateTimeFormat(c);
+    return c;
+  } catch {
+    return "en";
+  }
 }
 
 function escape(s) {
   return String(s ?? "")
-    .replace(/&/g, "&amp;").replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 }
 
 const ICON_CALENDAR = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>`;

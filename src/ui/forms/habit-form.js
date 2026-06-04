@@ -82,8 +82,7 @@ export function openHabitForm({ kind: kindArg, habit = null, sections = [], onSa
     // goal preset
     goalSelect.value = state.goalPreset;
     customGoalWrap.classList.toggle("is-hidden", state.goalPreset !== "custom");
-    customGoalInput.value =
-      state.customGoalDays != null ? String(state.customGoalDays) : "";
+    customGoalInput.value = state.customGoalDays != null ? String(state.customGoalDays) : "";
 
     if (isCounter) {
       targetInput.value = state.counterTarget != null ? String(state.counterTarget) : "";
@@ -198,8 +197,7 @@ export function openHabitForm({ kind: kindArg, habit = null, sections = [], onSa
         )
         .join("");
       sectionSelect.innerHTML =
-        opts +
-        `<option value="__new__">${escapeHtml(t("habit.fields.sectionNewOption"))}</option>`;
+        opts + `<option value="__new__">${escapeHtml(t("habit.fields.sectionNewOption"))}</option>`;
       selectSection(section.id);
       hideSectionInput();
     } catch (err) {
@@ -734,7 +732,6 @@ function translateSectionName(s) {
   }
   return s.name;
 }
-
 
 function escapeHtml(s) {
   return String(s)

@@ -72,11 +72,13 @@ function render() {
 
   header.querySelector("[data-action=today]").addEventListener("click", () => goto("today"));
   header.querySelector("[data-action=by-days]").addEventListener("click", () => goto("editor"));
-  header.querySelector("[data-action=new-habit]").addEventListener("click", () => openHabitForm({
-    kind: "checkbox",
-    sections: state.appData.sections,
-    onSaved: () => mountYears(root),
-  }));
+  header.querySelector("[data-action=new-habit]").addEventListener("click", () =>
+    openHabitForm({
+      kind: "checkbox",
+      sections: state.appData.sections,
+      onSaved: () => mountYears(root),
+    }),
+  );
 }
 
 function renderYearRow(year, todayYear) {
@@ -94,8 +96,10 @@ function renderYearRow(year, todayYear) {
 
 function escape(s) {
   return String(s ?? "")
-    .replace(/&/g, "&amp;").replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 }
 
 const ICON_FILE = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/></svg>`;

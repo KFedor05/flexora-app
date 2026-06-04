@@ -65,7 +65,9 @@ body {
   color: var(--text);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  transition: background-color 0.2s ease, color 0.2s ease;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
 }
 
 /* Theme-aware surfaces transition together when the palette swaps. Targeted
@@ -87,7 +89,10 @@ body {
 .nav-btn,
 .modal-shell,
 .field-label {
-  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease;
 }
 
 ::-webkit-scrollbar {
@@ -1664,9 +1669,15 @@ textarea.input {
   border-radius: 50%;
   display: inline-block;
 }
-.stat-dot.green { background: #5cd07e; }
-.stat-dot.orange { background: #ffae5c; }
-.stat-dot.red { background: #e07070; }
+.stat-dot.green {
+  background: #5cd07e;
+}
+.stat-dot.orange {
+  background: #ffae5c;
+}
+.stat-dot.red {
+  background: #e07070;
+}
 .stat-dot.empty {
   background: var(--surface);
   border: 1px solid var(--border-strong);
@@ -1914,7 +1925,9 @@ textarea.input {
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
-  transition: background-color 0.15s ease, border-color 0.15s ease;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease;
 }
 .theme-pill:hover {
   background: var(--bg-elev);
@@ -1979,7 +1992,9 @@ textarea.input {
   cursor: pointer;
   color: var(--text);
   font-family: inherit;
-  transition: background-color 0.15s ease, border-color 0.15s ease;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease;
 }
 .settings-row-button:hover {
   background: var(--bg-elev);
@@ -2117,5 +2132,7 @@ button:disabled,
   animation: spin 0.7s linear infinite;
 }
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }

@@ -16,7 +16,11 @@ import { remount } from "./router.js";
 import * as api from "../api/index.js";
 import { save as saveDialog, open as openDialog, ask } from "@tauri-apps/plugin-dialog";
 import { openPath, openUrl } from "@tauri-apps/plugin-opener";
-import { enable as enableAutostart, disable as disableAutostart, isEnabled as isAutostartEnabled } from "@tauri-apps/plugin-autostart";
+import {
+  enable as enableAutostart,
+  disable as disableAutostart,
+  isEnabled as isAutostartEnabled,
+} from "@tauri-apps/plugin-autostart";
 
 const THEME_OPTIONS = ["system", "light", "dark"];
 const LANG_OPTIONS = ["en", "ru"];

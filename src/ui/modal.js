@@ -93,7 +93,7 @@ export function openModal({ title, body, isDirty, onClose, footer }) {
   // Focus first focusable element.
   queueMicrotask(() => {
     const focusables = modal.querySelectorAll(
-      'input:not([disabled]), select:not([disabled]), textarea:not([disabled]), button:not([disabled])',
+      "input:not([disabled]), select:not([disabled]), textarea:not([disabled]), button:not([disabled])",
     );
     for (const el of focusables) {
       if (!el.classList.contains("modal-close")) {

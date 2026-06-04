@@ -85,8 +85,7 @@ export const createSection = (name) => invoke("create_section", { name });
  * @param {{ name?: string, order?: number }} patch
  * @returns {Promise<Section>}
  */
-export const updateSection = (id, patch) =>
-  invoke("update_section", { id, ...patch });
+export const updateSection = (id, patch) => invoke("update_section", { id, ...patch });
 
 /**
  * Default sections cannot be deleted. Habits in the deleted section are
@@ -95,8 +94,7 @@ export const updateSection = (id, patch) =>
  * @param {string} moveTo
  * @returns {Promise<void>}
  */
-export const deleteSection = (id, moveTo) =>
-  invoke("delete_section", { id, moveTo });
+export const deleteSection = (id, moveTo) => invoke("delete_section", { id, moveTo });
 
 /** @returns {Promise<Settings>} */
 export const getSettings = () => invoke("get_settings");
@@ -127,8 +125,7 @@ export const updateSettings = (patch) => invoke("update_settings", { patch });
 export const getDay = (date) => invoke("get_day", { date });
 
 /** @param {string} date @param {string} habitId @returns {Promise<DayView>} */
-export const toggleEntry = (date, habitId) =>
-  invoke("toggle_entry", { date, habitId });
+export const toggleEntry = (date, habitId) => invoke("toggle_entry", { date, habitId });
 
 /** @param {string} date @param {string} habitId @param {number} value @returns {Promise<DayView>} */
 export const setEntryCounter = (date, habitId, value) =>

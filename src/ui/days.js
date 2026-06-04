@@ -24,9 +24,7 @@ export async function mountDays(root, params) {
   if (rightPanel) rightPanel.style.display = "none";
 
   state.today = await api.todayIso();
-  const seed = params?.year
-    ? { year: params.year, month: params.month }
-    : monthOf(state.today);
+  const seed = params?.year ? { year: params.year, month: params.month } : monthOf(state.today);
   state.year = seed.year;
   state.month = seed.month;
 
@@ -92,8 +90,7 @@ function render() {
   // with empty rows for a fresh install.
   const naturalRows = state.briefs.filter(
     (b) =>
-      b.date <= state.today &&
-      (b.total > 0 || b.done > 0 || b.skipped > 0 || b.skippedWholeDay),
+      b.date <= state.today && (b.total > 0 || b.done > 0 || b.skipped > 0 || b.skippedWholeDay),
   );
   if (!naturalRows.length) {
     const empty = document.createElement("div");
@@ -112,7 +109,9 @@ function render() {
     root.appendChild(trailing);
   }
 
-  header.querySelector("[data-action=back]").addEventListener("click", () => goto("months", { year: state.year }));
+  header
+    .querySelector("[data-action=back]")
+    .addEventListener("click", () => goto("months", { year: state.year }));
   const prevBtn = header.querySelector("[data-action=prev]");
   if (prevDisabled()) prevBtn.disabled = true;
   if (!prevBtn.disabled) prevBtn.addEventListener("click", () => navMonth(-1));
@@ -120,11 +119,13 @@ function render() {
   if (!nextBtn.disabled) nextBtn.addEventListener("click", () => navMonth(1));
   header.querySelector("[data-action=today]").addEventListener("click", () => goto("today"));
   header.querySelector("[data-action=by-days]").addEventListener("click", () => goto("editor"));
-  header.querySelector("[data-action=new-habit]").addEventListener("click", () => openHabitForm({
-    kind: "checkbox",
-    sections: state.appData.sections,
-    onSaved: () => reload(),
-  }));
+  header.querySelector("[data-action=new-habit]").addEventListener("click", () =>
+    openHabitForm({
+      kind: "checkbox",
+      sections: state.appData.sections,
+      onSaved: () => reload(),
+    }),
+  );
 }
 
 function renderDayRow(brief) {
@@ -145,9 +146,11 @@ function renderDayRow(brief) {
     <span class="day-list-icon">${ICON_FILE}</span>
     <span class="day-list-num">${d.getDate()}</span>
     <span class="day-list-name">${escape(formatWeekday(d))}</span>
-    ${isToday
-      ? `<span class="today-badge today-badge-row">${escape(t("today.todayBadge"))}</span>`
-      : `<span class="day-list-stat"><span class="stat-dot ${dotClass}"></span>${escape(statLabel(brief))}</span>`}
+    ${
+      isToday
+        ? `<span class="today-badge today-badge-row">${escape(t("today.todayBadge"))}</span>`
+        : `<span class="day-list-stat"><span class="stat-dot ${dotClass}"></span>${escape(statLabel(brief))}</span>`
+    }
   `;
   row.addEventListener("click", () => goto("today", { date: brief.date }));
   return row;
@@ -188,8 +191,14 @@ function statLabel(brief) {
 function navMonth(delta) {
   let m = state.month + delta;
   let y = state.year;
-  while (m < 1) { m += 12; y -= 1; }
-  while (m > 12) { m -= 12; y += 1; }
+  while (m < 1) {
+    m += 12;
+    y -= 1;
+  }
+  while (m > 12) {
+    m -= 12;
+    y += 1;
+  }
   const todayPos = monthOf(state.today);
   if (y > todayPos.year || (y === todayPos.year && m > todayPos.month)) return;
   if (delta < 0 && !hasHabitInOrBefore(y, m)) return;
@@ -207,15 +216,16 @@ function nextDisabled() {
 // scrolling there would only show an empty page.
 function hasHabitInOrBefore(year, month) {
   const monthEndIso = `${year}-${String(month).padStart(2, "0")}-31`;
-  return (state.appData?.habits ?? []).some(
-    (h) => !h.archived && h.startDate <= monthEndIso,
-  );
+  return (state.appData?.habits ?? []).some((h) => !h.archived && h.startDate <= monthEndIso);
 }
 
 function prevDisabled() {
   let m = state.month - 1;
   let y = state.year;
-  if (m < 1) { m = 12; y -= 1; }
+  if (m < 1) {
+    m = 12;
+    y -= 1;
+  }
   return !hasHabitInOrBefore(y, m);
 }
 
@@ -259,8 +269,10 @@ function safeLocale() {
 
 function escape(s) {
   return String(s ?? "")
-    .replace(/&/g, "&amp;").replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 }
 
 const ICON_CALENDAR = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>`;

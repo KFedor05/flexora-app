@@ -67,8 +67,12 @@ function render() {
   root.appendChild(wrap);
 
   wrap.querySelector("[data-action=goto-today]").addEventListener("click", () => goto("today"));
-  wrap.querySelector("[data-action=add-habit]").addEventListener("click", () => openCreate("checkbox"));
-  wrap.querySelector("[data-action=add-counter]").addEventListener("click", () => openCreate("counter"));
+  wrap
+    .querySelector("[data-action=add-habit]")
+    .addEventListener("click", () => openCreate("checkbox"));
+  wrap
+    .querySelector("[data-action=add-counter]")
+    .addEventListener("click", () => openCreate("counter"));
 
   wrap.querySelectorAll("[data-mode]").forEach((btn) => {
     btn.addEventListener("click", () => {
@@ -114,7 +118,9 @@ function renderFlat(container) {
     animation: 150,
     onEnd: (evt) => {
       if (evt.oldIndex === evt.newIndex) return;
-      onSectionsReorder(Array.from(list.querySelectorAll("[data-section-id]")).map((el) => el.dataset.sectionId));
+      onSectionsReorder(
+        Array.from(list.querySelectorAll("[data-section-id]")).map((el) => el.dataset.sectionId),
+      );
     },
   });
 
@@ -166,7 +172,8 @@ function buildSectionElement(section, { mode }) {
 
   // Collapse on header click (but not when clicking actions/handle).
   sectionEl.querySelector(".section-header").addEventListener("click", (e) => {
-    if (e.target.closest("[data-section-action]") || e.target.closest(".section-drag-handle")) return;
+    if (e.target.closest("[data-section-action]") || e.target.closest(".section-drag-handle"))
+      return;
     toggleCollapse(section.id);
     sectionEl.classList.toggle("collapsed");
   });
@@ -475,7 +482,9 @@ async function onSectionsReorder(sectionIds) {
 async function onHabitDrop(evt) {
   const habitId = evt.item.dataset.habitId;
   const newSectionId = evt.to.dataset.sectionId;
-  const orderedIds = Array.from(evt.to.querySelectorAll("[data-habit-id]")).map((el) => el.dataset.habitId);
+  const orderedIds = Array.from(evt.to.querySelectorAll("[data-habit-id]")).map(
+    (el) => el.dataset.habitId,
+  );
 
   try {
     // 1) Move the habit to the new section (if changed).
@@ -490,7 +499,9 @@ async function onHabitDrop(evt) {
     }
     // 3) Also re-number the source section if it was different.
     if (evt.from !== evt.to) {
-      const sourceIds = Array.from(evt.from.querySelectorAll("[data-habit-id]")).map((el) => el.dataset.habitId);
+      const sourceIds = Array.from(evt.from.querySelectorAll("[data-habit-id]")).map(
+        (el) => el.dataset.habitId,
+      );
       for (let i = 0; i < sourceIds.length; i++) {
         // eslint-disable-next-line no-await-in-loop
         await api.updateHabit(sourceIds[i], { order: i });

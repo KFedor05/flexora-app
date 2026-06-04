@@ -94,7 +94,9 @@ async function renderMonth() {
       </button>
     </div>
     <div class="weekday-row">
-      ${weekdayHeaders().map((w) => `<div class="weekday">${escape(w)}</div>`).join("")}
+      ${weekdayHeaders()
+        .map((w) => `<div class="weekday">${escape(w)}</div>`)
+        .join("")}
     </div>
     <div class="calendar-grid"></div>
     <div class="cal-actions">
@@ -153,7 +155,7 @@ function monthDayCell(brief, dayNum) {
   const isToday = iso === state.today;
   const isFuture = iso > state.today;
   const colorClass = cellColorClass(brief, isFuture);
-  const hasFlame = !isFuture && (brief.done + brief.skipped) > 0;
+  const hasFlame = !isFuture && brief.done + brief.skipped > 0;
   const star = brief.skippedWholeDay;
 
   cell.className = `day-cell ${colorClass}${isToday ? " today" : ""}`;

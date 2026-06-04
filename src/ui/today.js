@@ -140,8 +140,12 @@ function renderHeader() {
     await reload();
   });
   header.querySelector("[data-action=goto-editor]").addEventListener("click", () => goto("editor"));
-  header.querySelector("[data-action=open-calendar]").addEventListener("click", () => openCalendar(state.date));
-  header.querySelector("[data-action=new-habit]").addEventListener("click", () => openCreate("checkbox"));
+  header
+    .querySelector("[data-action=open-calendar]")
+    .addEventListener("click", () => openCalendar(state.date));
+  header
+    .querySelector("[data-action=new-habit]")
+    .addEventListener("click", () => openCreate("checkbox"));
 
   return header;
 }
@@ -159,9 +163,7 @@ function isFuture() {
 // can't be scrolled forever on a clean install.
 function hasHabitBefore(iso) {
   if (!state.appData?.habits?.length) return false;
-  return state.appData.habits.some(
-    (h) => !h.archived && h.startDate < iso,
-  );
+  return state.appData.habits.some((h) => !h.archived && h.startDate < iso);
 }
 
 function renderDayPill() {
@@ -200,7 +202,7 @@ function renderDayPill() {
         </div>
       </div>
     </div>
-    <button type="button" class="special-day-btn ${special ? "active" : ""}" data-action="special" ${specialBtnDisabled ? "data-noop=\"true\"" : ""}>
+    <button type="button" class="special-day-btn ${special ? "active" : ""}" data-action="special" ${specialBtnDisabled ? 'data-noop="true"' : ""}>
       ${ICONS.star}
       <span>${escape(t(special ? "today.unmarkSpecial" : "today.markSpecial"))}</span>
     </button>
@@ -267,7 +269,7 @@ function renderCheckboxRow(habit, entry) {
     </button>
     <span class="task-name">${escape(habit.title)}</span>
     ${renderStreakPill(habit.id, frozen)}
-    <button type="button" class="star-btn ${frozen ? "active" : ""}" data-action="freeze" ${freezeNoop ? "data-noop=\"true\"" : ""} ${future ? "disabled" : ""} title="${escape(future ? t("today.futureDisabled") : t(frozen ? "today.unfreeze" : "today.freeze"))}" aria-label="${escape(t(frozen ? "today.unfreeze" : "today.freeze"))}">
+    <button type="button" class="star-btn ${frozen ? "active" : ""}" data-action="freeze" ${freezeNoop ? 'data-noop="true"' : ""} ${future ? "disabled" : ""} title="${escape(future ? t("today.futureDisabled") : t(frozen ? "today.unfreeze" : "today.freeze"))}" aria-label="${escape(t(frozen ? "today.unfreeze" : "today.freeze"))}">
       ${frozen ? ICONS.starFilled : ICONS.star}
     </button>
   `;
@@ -362,10 +364,14 @@ function renderExpandedPanel() {
   state.rightPanel.innerHTML = `
     <header class="counter-panel-header">
       <h2 class="counter-panel-title">${escape(t("counters.title"))}</h2>
-      ${canManuallyCollapse ? `
+      ${
+        canManuallyCollapse
+          ? `
       <button type="button" class="counter-panel-toggle" data-action="collapse" title="${escape(t("counters.collapse"))}" aria-label="${escape(t("counters.collapse"))}">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
-      </button>` : ""}
+      </button>`
+          : ""
+      }
     </header>
     <div class="counter-panel-body"></div>
   `;
@@ -385,7 +391,9 @@ function renderExpandedPanel() {
         <button type="button" class="btn btn-secondary" data-action="new-counter">${escape(t("counters.createFirst"))}</button>
       </div>
     `;
-    body.querySelector("[data-action=new-counter]").addEventListener("click", () => openCreate("counter"));
+    body
+      .querySelector("[data-action=new-counter]")
+      .addEventListener("click", () => openCreate("counter"));
     return;
   }
 
@@ -399,7 +407,9 @@ function renderExpandedPanel() {
     handle: ".counter-card-name",
     onEnd: (evt) => {
       if (evt.oldIndex === evt.newIndex) return;
-      const orderedIds = Array.from(list.querySelectorAll("[data-habit-id]")).map((el) => el.dataset.habitId);
+      const orderedIds = Array.from(list.querySelectorAll("[data-habit-id]")).map(
+        (el) => el.dataset.habitId,
+      );
       reorderCounters(orderedIds);
     },
   });
@@ -437,8 +447,16 @@ function renderCounterCard(habit, entry) {
   const steps = (habit.counter?.steps ?? []).slice().sort((a, b) => a - b);
 
   const stepsHtml = steps
-    .map((s) => `<button type="button" class="counter-step minus" data-step="-${s}">−${formatNum(s)}</button>`)
-    .concat(steps.map((s) => `<button type="button" class="counter-step plus" data-step="${s}">+${formatNum(s)}</button>`))
+    .map(
+      (s) =>
+        `<button type="button" class="counter-step minus" data-step="-${s}">−${formatNum(s)}</button>`,
+    )
+    .concat(
+      steps.map(
+        (s) =>
+          `<button type="button" class="counter-step plus" data-step="${s}">+${formatNum(s)}</button>`,
+      ),
+    )
     .join("");
 
   const frozen = entry.status === "skipped";
@@ -448,8 +466,16 @@ function renderCounterCard(habit, entry) {
 
   const stepsHtmlFinal = future
     ? steps
-        .map((s) => `<button type="button" class="counter-step minus" disabled>−${formatNum(s)}</button>`)
-        .concat(steps.map((s) => `<button type="button" class="counter-step plus" disabled>+${formatNum(s)}</button>`))
+        .map(
+          (s) =>
+            `<button type="button" class="counter-step minus" disabled>−${formatNum(s)}</button>`,
+        )
+        .concat(
+          steps.map(
+            (s) =>
+              `<button type="button" class="counter-step plus" disabled>+${formatNum(s)}</button>`,
+          ),
+        )
         .join("")
     : stepsHtml;
 
@@ -458,7 +484,7 @@ function renderCounterCard(habit, entry) {
       <div class="counter-card-name">${escape(habit.title)}</div>
       <div class="counter-card-head-right">
         ${renderStreakPill(habit.id, frozen)}
-        <button type="button" class="star-btn ${frozen ? "active" : ""}" data-action="freeze" ${(future || entry.status === "done") ? "data-noop=\"true\"" : ""} ${future ? "disabled" : ""} title="${escape(future ? t("today.futureDisabled") : t(frozen ? "today.unfreeze" : "today.freeze"))}" aria-label="${escape(t(frozen ? "today.unfreeze" : "today.freeze"))}">
+        <button type="button" class="star-btn ${frozen ? "active" : ""}" data-action="freeze" ${future || entry.status === "done" ? 'data-noop="true"' : ""} ${future ? "disabled" : ""} title="${escape(future ? t("today.futureDisabled") : t(frozen ? "today.unfreeze" : "today.freeze"))}" aria-label="${escape(t(frozen ? "today.unfreeze" : "today.freeze"))}">
           ${frozen ? ICONS.starFilled : ICONS.star}
         </button>
         <button type="button" class="counter-edit" data-action="edit" title="${escape(t("common.edit"))}" aria-label="${escape(t("common.edit"))}">${ICONS.pencil}</button>
@@ -531,8 +557,12 @@ function renderEmptyFirstRun(root) {
       </div>
     </div>
   `;
-  wrap.querySelector("[data-action=new-habit]").addEventListener("click", () => openCreate("checkbox"));
-  wrap.querySelector("[data-action=new-counter]").addEventListener("click", () => openCreate("counter"));
+  wrap
+    .querySelector("[data-action=new-habit]")
+    .addEventListener("click", () => openCreate("checkbox"));
+  wrap
+    .querySelector("[data-action=new-counter]")
+    .addEventListener("click", () => openCreate("counter"));
   root.appendChild(wrap);
 }
 
