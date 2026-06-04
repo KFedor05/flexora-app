@@ -21,15 +21,17 @@ fn today() -> chrono::NaiveDate {
 
 fn ensure_not_future(date: NaiveDate) -> Result<(), AppError> {
     if date > today() {
-        return Err(AppError::Validation(
-            "future dates cannot be edited".into(),
-        ));
+        return Err(AppError::Validation("future dates cannot be edited".into()));
     }
     Ok(())
 }
 
 fn next_section_order(data: &AppData) -> u32 {
-    data.sections.iter().map(|s| s.order).max().map_or(0, |o| o + 1)
+    data.sections
+        .iter()
+        .map(|s| s.order)
+        .max()
+        .map_or(0, |o| o + 1)
 }
 
 fn next_habit_order_in_section(data: &AppData, section_id: &str) -> u32 {
@@ -47,10 +49,7 @@ pub fn load_app_data(state: State<'_, SharedState>) -> CmdResult<AppData> {
 }
 
 #[tauri::command]
-pub fn create_habit(
-    input: HabitInput,
-    state: State<'_, SharedState>,
-) -> CmdResult<Habit> {
+pub fn create_habit(input: HabitInput, state: State<'_, SharedState>) -> CmdResult<Habit> {
     state
         .mutate(|data| {
             validate::validate_habit_input(data, &input)?;
@@ -203,11 +202,7 @@ pub fn update_section(
 }
 
 #[tauri::command]
-pub fn delete_section(
-    id: String,
-    move_to: String,
-    state: State<'_, SharedState>,
-) -> CmdResult<()> {
+pub fn delete_section(id: String, move_to: String, state: State<'_, SharedState>) -> CmdResult<()> {
     state
         .mutate(|data| {
             let target_exists = data.sections.iter().any(|s| s.id == move_to);
@@ -267,9 +262,7 @@ pub fn toggle_entry(
                 .find(|h| h.id == habit_id)
                 .ok_or_else(|| AppError::NotFound(format!("habit {habit_id}")))?;
             if !day_engine::habit_active_on(habit, parsed) {
-                return Err(AppError::Validation(
-                    "habit not active on this date".into(),
-                ));
+                return Err(AppError::Validation("habit not active on this date".into()));
             }
 
             day_engine::materialize_day(data, parsed);
@@ -369,9 +362,7 @@ pub fn toggle_freeze_entry(
                 .find(|h| h.id == habit_id)
                 .ok_or_else(|| AppError::NotFound(format!("habit {habit_id}")))?;
             if !day_engine::habit_active_on(habit, parsed) {
-                return Err(AppError::Validation(
-                    "habit not active on this date".into(),
-                ));
+                return Err(AppError::Validation("habit not active on this date".into()));
             }
 
             day_engine::materialize_day(data, parsed);
@@ -420,11 +411,7 @@ pub fn toggle_skip_day(date: String, state: State<'_, SharedState>) -> CmdResult
 }
 
 #[tauri::command]
-pub fn get_month(
-    year: i32,
-    month: u32,
-    state: State<'_, SharedState>,
-) -> CmdResult<Vec<DayBrief>> {
+pub fn get_month(year: i32, month: u32, state: State<'_, SharedState>) -> CmdResult<Vec<DayBrief>> {
     if !(1..=12).contains(&month) {
         return Err(AppError::Validation(format!("invalid month {month}")).into());
     }
@@ -475,13 +462,13 @@ pub fn export_to_path(path: String, state: State<'_, SharedState>) -> CmdResult<
     let snapshot = state.snapshot();
     let bytes = serde_json::to_vec_pretty(&snapshot)
         .map_err(|e| AppError::Validation(format!("serialize failed: {e}")))?;
-    std::fs::write(&path, bytes).map_err(|e| AppError::Io(e))?;
+    std::fs::write(&path, bytes).map_err(AppError::Io)?;
     Ok(())
 }
 
 #[tauri::command]
 pub fn import_from_path(path: String, state: State<'_, SharedState>) -> CmdResult<AppData> {
-    let bytes = std::fs::read(&path).map_err(|e| AppError::Io(e))?;
+    let bytes = std::fs::read(&path).map_err(AppError::Io)?;
     let mut imported: AppData = serde_json::from_slice(&bytes)
         .map_err(|e| AppError::Validation(format!("invalid backup file: {e}")))?;
 
@@ -497,15 +484,14 @@ pub fn import_from_path(path: String, state: State<'_, SharedState>) -> CmdResul
     // with the data even if the backup was taken from a different build.
     streaks::recompute_all_streaks(&mut imported, today());
 
-    state.replace(imported.clone()).map_err(Into::<String>::into)?;
+    state
+        .replace(imported.clone())
+        .map_err(Into::<String>::into)?;
     Ok(imported)
 }
 
 #[tauri::command]
-pub fn update_settings(
-    patch: SettingsPatch,
-    state: State<'_, SharedState>,
-) -> CmdResult<Settings> {
+pub fn update_settings(patch: SettingsPatch, state: State<'_, SharedState>) -> CmdResult<Settings> {
     state
         .mutate(|data| {
             let s = &mut data.settings;

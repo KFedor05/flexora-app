@@ -250,7 +250,11 @@ mod tests {
         data.habits
             .push(make_habit(start, Frequency::Interval { interval_days: 3 }));
         // Expected days: Jun 1, 4, 7.
-        for d in [start, start + chrono::Duration::days(3), start + chrono::Duration::days(6)] {
+        for d in [
+            start,
+            start + chrono::Duration::days(3),
+            start + chrono::Duration::days(6),
+        ] {
             set_status(&mut data, d, "h", EntryStatus::Done);
         }
         let today = start + chrono::Duration::days(6);
@@ -265,7 +269,12 @@ mod tests {
         data.habits.push(daily_habit(start));
         // 5 days done.
         for offset in 0..5 {
-            set_status(&mut data, start + chrono::Duration::days(offset), "h", EntryStatus::Done);
+            set_status(
+                &mut data,
+                start + chrono::Duration::days(offset),
+                "h",
+                EntryStatus::Done,
+            );
         }
         // Uncheck middle day (offset=2).
         set_status(
@@ -287,9 +296,24 @@ mod tests {
         data.habits.push(daily_habit(start));
         // Done, Done, Skipped (freeze), Done.
         set_status(&mut data, start, "h", EntryStatus::Done);
-        set_status(&mut data, start + chrono::Duration::days(1), "h", EntryStatus::Done);
-        set_status(&mut data, start + chrono::Duration::days(2), "h", EntryStatus::Skipped);
-        set_status(&mut data, start + chrono::Duration::days(3), "h", EntryStatus::Done);
+        set_status(
+            &mut data,
+            start + chrono::Duration::days(1),
+            "h",
+            EntryStatus::Done,
+        );
+        set_status(
+            &mut data,
+            start + chrono::Duration::days(2),
+            "h",
+            EntryStatus::Skipped,
+        );
+        set_status(
+            &mut data,
+            start + chrono::Duration::days(3),
+            "h",
+            EntryStatus::Done,
+        );
         let today = start + chrono::Duration::days(3);
         let (current, _) = compute_habit_streak(&data, &data.habits[0].clone(), today);
         // Streak counts only Done days (3), but the Skipped day didn't break the walk.
@@ -303,7 +327,12 @@ mod tests {
         data.habits.push(daily_habit(start));
         // 3 days done; today (4th day) still pending.
         for offset in 0..3 {
-            set_status(&mut data, start + chrono::Duration::days(offset), "h", EntryStatus::Done);
+            set_status(
+                &mut data,
+                start + chrono::Duration::days(offset),
+                "h",
+                EntryStatus::Done,
+            );
         }
         let today = start + chrono::Duration::days(3);
         let (current, _) = compute_habit_streak(&data, &data.habits[0].clone(), today);
@@ -323,7 +352,11 @@ mod tests {
         );
         data.habits.push(habit);
         // Mark Mon Jun 1, Wed Jun 3, Fri Jun 5 done.
-        for d in [start, start + chrono::Duration::days(2), start + chrono::Duration::days(4)] {
+        for d in [
+            start,
+            start + chrono::Duration::days(2),
+            start + chrono::Duration::days(4),
+        ] {
             set_status(&mut data, d, "h", EntryStatus::Done);
         }
         let today = start + chrono::Duration::days(4); // Fri
@@ -338,7 +371,12 @@ mod tests {
         data.habits.push(daily_habit(start));
         // 4 in a row.
         for offset in 0..4 {
-            set_status(&mut data, start + chrono::Duration::days(offset), "h", EntryStatus::Done);
+            set_status(
+                &mut data,
+                start + chrono::Duration::days(offset),
+                "h",
+                EntryStatus::Done,
+            );
         }
         let today = start + chrono::Duration::days(3);
         recompute_habit_streak(&mut data, "h", today);
@@ -365,7 +403,12 @@ mod tests {
         data.habits.push(daily_habit(start));
         // Mark days 0,1,2 done. Day 3 only partial.
         for offset in 0..3 {
-            set_status(&mut data, start + chrono::Duration::days(offset), "h", EntryStatus::Done);
+            set_status(
+                &mut data,
+                start + chrono::Duration::days(offset),
+                "h",
+                EntryStatus::Done,
+            );
         }
         recompute_perfect_day_streak(&mut data, start + chrono::Duration::days(2));
         assert_eq!(data.perfect_day_streak.current, 3);
@@ -378,7 +421,12 @@ mod tests {
         let mut data = AppData::default();
         data.habits.push(daily_habit(start));
         for offset in 0..3 {
-            set_status(&mut data, start + chrono::Duration::days(offset), "h", EntryStatus::Done);
+            set_status(
+                &mut data,
+                start + chrono::Duration::days(offset),
+                "h",
+                EntryStatus::Done,
+            );
         }
         // Today is day 3, not yet marked.
         recompute_perfect_day_streak(&mut data, start + chrono::Duration::days(3));
@@ -445,17 +493,34 @@ mod tests {
         let mut data = AppData::default();
         data.habits.push(daily_habit(start));
         for offset in [0, 1, 3, 4] {
-            set_status(&mut data, start + chrono::Duration::days(offset), "h", EntryStatus::Done);
+            set_status(
+                &mut data,
+                start + chrono::Duration::days(offset),
+                "h",
+                EntryStatus::Done,
+            );
         }
         let today = start + chrono::Duration::days(4);
         recompute_habit_streak(&mut data, "h", today);
-        assert_eq!(data.streaks.get("h").unwrap().current, 2, "gap breaks the walk");
+        assert_eq!(
+            data.streaks.get("h").unwrap().current,
+            2,
+            "gap breaks the walk"
+        );
 
         // Retroactively mark day 2 as Done.
-        set_status(&mut data, start + chrono::Duration::days(2), "h", EntryStatus::Done);
+        set_status(
+            &mut data,
+            start + chrono::Duration::days(2),
+            "h",
+            EntryStatus::Done,
+        );
         recompute_habit_streak(&mut data, "h", today);
         let s = data.streaks.get("h").unwrap();
-        assert_eq!(s.current, 5, "filling the gap should restore the full streak");
+        assert_eq!(
+            s.current, 5,
+            "filling the gap should restore the full streak"
+        );
         assert_eq!(s.longest, 5, "longest must catch up to the new current");
     }
 
@@ -467,7 +532,12 @@ mod tests {
         let mut data = AppData::default();
         data.habits.push(daily_habit(start));
         for offset in 0..5 {
-            set_status(&mut data, start + chrono::Duration::days(offset), "h", EntryStatus::Done);
+            set_status(
+                &mut data,
+                start + chrono::Duration::days(offset),
+                "h",
+                EntryStatus::Done,
+            );
         }
         let today = start + chrono::Duration::days(4);
         recompute_habit_streak(&mut data, "h", today);
@@ -495,14 +565,28 @@ mod tests {
         let mut data = AppData::default();
         data.habits.push(daily_habit(start));
         for offset in [0, 1, 2, 4, 5, 6] {
-            set_status(&mut data, start + chrono::Duration::days(offset), "h", EntryStatus::Done);
+            set_status(
+                &mut data,
+                start + chrono::Duration::days(offset),
+                "h",
+                EntryStatus::Done,
+            );
         }
         let today = start + chrono::Duration::days(6);
         recompute_habit_streak(&mut data, "h", today);
-        assert_eq!(data.streaks.get("h").unwrap().current, 3, "initial gap at day 3");
+        assert_eq!(
+            data.streaks.get("h").unwrap().current,
+            3,
+            "initial gap at day 3"
+        );
 
         // A: fill the gap.
-        set_status(&mut data, start + chrono::Duration::days(3), "h", EntryStatus::Done);
+        set_status(
+            &mut data,
+            start + chrono::Duration::days(3),
+            "h",
+            EntryStatus::Done,
+        );
         recompute_habit_streak(&mut data, "h", today);
         assert_eq!(data.streaks.get("h").unwrap().current, 7);
 
@@ -512,13 +596,23 @@ mod tests {
         assert_eq!(data.streaks.get("h").unwrap().current, 6);
 
         // C: freeze day 4 — Skipped preserves the walk but doesn't grow it.
-        set_status(&mut data, start + chrono::Duration::days(4), "h", EntryStatus::Skipped);
+        set_status(
+            &mut data,
+            start + chrono::Duration::days(4),
+            "h",
+            EntryStatus::Skipped,
+        );
         recompute_habit_streak(&mut data, "h", today);
         // Done at days 1,2,3,5,6 (5 Done) — freeze day 4 doesn't add to count.
         assert_eq!(data.streaks.get("h").unwrap().current, 5);
 
         // D: uncheck day 5 — breaks the walk between day 5 and day 6.
-        set_status(&mut data, start + chrono::Duration::days(5), "h", EntryStatus::Pending);
+        set_status(
+            &mut data,
+            start + chrono::Duration::days(5),
+            "h",
+            EntryStatus::Pending,
+        );
         recompute_habit_streak(&mut data, "h", today);
         // Only day 6 (Done) is left before walk breaks at day 5.
         assert_eq!(data.streaks.get("h").unwrap().current, 1);
@@ -554,7 +648,10 @@ mod tests {
         let today = start + chrono::Duration::days(4);
         // Force day_status to be cached correctly.
         for offset in 0..5 {
-            crate::day_engine::recompute_day_status(&mut data, start + chrono::Duration::days(offset));
+            crate::day_engine::recompute_day_status(
+                &mut data,
+                start + chrono::Duration::days(offset),
+            );
         }
 
         recompute_perfect_day_streak(&mut data, today);
@@ -564,7 +661,12 @@ mod tests {
         );
 
         // Retroactively fill the gap on day 3.
-        set_status(&mut data, start + chrono::Duration::days(3), "b", EntryStatus::Done);
+        set_status(
+            &mut data,
+            start + chrono::Duration::days(3),
+            "b",
+            EntryStatus::Done,
+        );
         crate::day_engine::recompute_day_status(&mut data, start + chrono::Duration::days(3));
         recompute_perfect_day_streak(&mut data, today);
         assert_eq!(
@@ -593,8 +695,13 @@ mod tests {
             }),
             frequency: Frequency::ByDays {
                 days: vec![
-                    Weekday::Mon, Weekday::Tue, Weekday::Wed,
-                    Weekday::Thu, Weekday::Fri, Weekday::Sat, Weekday::Sun,
+                    Weekday::Mon,
+                    Weekday::Tue,
+                    Weekday::Wed,
+                    Weekday::Thu,
+                    Weekday::Fri,
+                    Weekday::Sat,
+                    Weekday::Sun,
                 ],
                 preset: FrequencyPreset::All,
             },
@@ -639,7 +746,10 @@ mod tests {
         recompute_habit_streak(&mut data, "c", today);
         let s = data.streaks.get("c").unwrap();
         // Walk: today (Done, +1) → step back to day 1 (Pending past) → break.
-        assert_eq!(s.current, 1, "counter dropped below target breaks the past walk");
+        assert_eq!(
+            s.current, 1,
+            "counter dropped below target breaks the past walk"
+        );
         assert_eq!(s.longest, 3, "longest stays at historical peak");
     }
 
@@ -654,17 +764,34 @@ mod tests {
         let mut data = AppData::default();
         data.habits.push(daily_habit(start));
         for offset in [0, 1, 3, 4] {
-            set_status(&mut data, start + chrono::Duration::days(offset), "h", EntryStatus::Done);
+            set_status(
+                &mut data,
+                start + chrono::Duration::days(offset),
+                "h",
+                EntryStatus::Done,
+            );
         }
         let today = start + chrono::Duration::days(4);
         recompute_habit_streak(&mut data, "h", today);
-        assert_eq!(data.streaks.get("h").unwrap().current, 2, "gap breaks the walk");
+        assert_eq!(
+            data.streaks.get("h").unwrap().current,
+            2,
+            "gap breaks the walk"
+        );
 
         // Retroactively freeze day 2.
-        set_status(&mut data, start + chrono::Duration::days(2), "h", EntryStatus::Skipped);
+        set_status(
+            &mut data,
+            start + chrono::Duration::days(2),
+            "h",
+            EntryStatus::Skipped,
+        );
         recompute_habit_streak(&mut data, "h", today);
         let s = data.streaks.get("h").unwrap();
-        assert_eq!(s.current, 4, "freeze preserves the walk → all 4 Done days count");
+        assert_eq!(
+            s.current, 4,
+            "freeze preserves the walk → all 4 Done days count"
+        );
         assert_eq!(s.longest, 4);
     }
 }

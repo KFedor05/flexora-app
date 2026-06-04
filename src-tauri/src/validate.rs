@@ -4,7 +4,7 @@
 use chrono::NaiveDate;
 
 use crate::errors::AppError;
-use crate::model::{CounterConfig, HabitInput, HabitKind, HabitPatch, AppData};
+use crate::model::{AppData, CounterConfig, HabitInput, HabitKind, HabitPatch};
 
 pub const MAX_TITLE_LEN: usize = 60;
 pub const MAX_SECTION_NAME_LEN: usize = 40;
@@ -89,9 +89,7 @@ pub fn validate_habit_input(data: &AppData, input: &HabitInput) -> Result<(), Ap
     }
     if let Some(end) = input.end_date {
         if end < input.start_date {
-            return Err(AppError::Validation(
-                "endDate is before startDate".into(),
-            ));
+            return Err(AppError::Validation("endDate is before startDate".into()));
         }
     }
     Ok(())
@@ -112,18 +110,14 @@ pub fn validate_habit_patch(
     if let Some(cfg) = &patch.counter {
         validate_counter(cfg)?;
     }
-    if let Some(new_end) = patch.end_date {
-        if let Some(end) = new_end {
-            if end < start_date {
-                return Err(AppError::Validation(
-                    "endDate is before startDate".into(),
-                ));
-            }
-            if end < today {
-                return Err(AppError::Validation(
-                    "endDate cannot be moved into the past".into(),
-                ));
-            }
+    if let Some(Some(end)) = patch.end_date {
+        if end < start_date {
+            return Err(AppError::Validation("endDate is before startDate".into()));
+        }
+        if end < today {
+            return Err(AppError::Validation(
+                "endDate cannot be moved into the past".into(),
+            ));
         }
     }
     Ok(())

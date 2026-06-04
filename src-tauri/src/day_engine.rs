@@ -76,7 +76,7 @@ pub struct DayEntryView {
 /// Build a `DayView` for the given date.
 pub fn build_day_view(data: &AppData, date: NaiveDate) -> DayView {
     let stored = data.days.get(&date.to_string()).cloned();
-    let skipped_whole_day = stored.as_ref().map_or(false, |d| d.skipped_whole_day);
+    let skipped_whole_day = stored.as_ref().is_some_and(|d| d.skipped_whole_day);
 
     let active_habits: Vec<&Habit> = data
         .habits
@@ -169,7 +169,7 @@ pub fn build_month_view(data: &AppData, year: i32, month: u32) -> Vec<DayBrief> 
 
 fn build_day_brief(data: &AppData, date: NaiveDate) -> DayBrief {
     let stored = data.days.get(&date.to_string());
-    let skipped_whole_day = stored.map_or(false, |d| d.skipped_whole_day);
+    let skipped_whole_day = stored.is_some_and(|d| d.skipped_whole_day);
 
     let total = data
         .habits
@@ -323,7 +323,7 @@ pub fn recompute_day_status(data: &mut AppData, date: NaiveDate) -> DayStatus {
         // values above zero count as progress even when status is Pending.
         let has_progress = day.entries.iter().any(|e| {
             !matches!(e.status, EntryStatus::Pending)
-                || e.counter_current.map_or(false, |v| v > 0.0)
+                || e.counter_current.is_some_and(|v| v > 0.0)
         });
         let nothing_to_remember = !day.skipped_whole_day && !has_progress;
         (status, nothing_to_remember)
@@ -339,7 +339,12 @@ pub fn recompute_day_status(data: &mut AppData, date: NaiveDate) -> DayStatus {
     status
 }
 
-pub fn derive_day_status(done: u32, skipped: u32, total: u32, skipped_whole_day: bool) -> DayStatus {
+pub fn derive_day_status(
+    done: u32,
+    skipped: u32,
+    total: u32,
+    skipped_whole_day: bool,
+) -> DayStatus {
     if skipped_whole_day {
         return DayStatus::Skipped;
     }
@@ -387,7 +392,7 @@ pub fn habit_active_on(habit: &Habit, date: NaiveDate) -> bool {
                 return false;
             }
             let diff = (date - habit.start_date).num_days();
-            diff >= 0 && (diff as i64) % (*interval_days as i64) == 0
+            diff >= 0 && diff % (*interval_days as i64) == 0
         }
     }
 }
@@ -421,11 +426,23 @@ mod tests {
 
     #[test]
     fn weekdays_match_only_listed_days() {
-        let h = habit_by_days(vec![Weekday::Mon, Weekday::Wed], NaiveDate::from_ymd_opt(2026, 6, 1).unwrap());
+        let h = habit_by_days(
+            vec![Weekday::Mon, Weekday::Wed],
+            NaiveDate::from_ymd_opt(2026, 6, 1).unwrap(),
+        );
         // 2026-06-01 is Monday.
-        assert!(habit_active_on(&h, NaiveDate::from_ymd_opt(2026, 6, 1).unwrap()));
-        assert!(!habit_active_on(&h, NaiveDate::from_ymd_opt(2026, 6, 2).unwrap())); // Tue
-        assert!(habit_active_on(&h, NaiveDate::from_ymd_opt(2026, 6, 3).unwrap())); // Wed
+        assert!(habit_active_on(
+            &h,
+            NaiveDate::from_ymd_opt(2026, 6, 1).unwrap()
+        ));
+        assert!(!habit_active_on(
+            &h,
+            NaiveDate::from_ymd_opt(2026, 6, 2).unwrap()
+        )); // Tue
+        assert!(habit_active_on(
+            &h,
+            NaiveDate::from_ymd_opt(2026, 6, 3).unwrap()
+        )); // Wed
     }
 
     #[test]
@@ -446,17 +463,38 @@ mod tests {
             completed_at: None,
             created_at: Utc::now(),
         };
-        assert!(habit_active_on(&h, NaiveDate::from_ymd_opt(2026, 6, 1).unwrap()));
-        assert!(!habit_active_on(&h, NaiveDate::from_ymd_opt(2026, 6, 2).unwrap()));
-        assert!(habit_active_on(&h, NaiveDate::from_ymd_opt(2026, 6, 4).unwrap()));
-        assert!(habit_active_on(&h, NaiveDate::from_ymd_opt(2026, 6, 7).unwrap()));
+        assert!(habit_active_on(
+            &h,
+            NaiveDate::from_ymd_opt(2026, 6, 1).unwrap()
+        ));
+        assert!(!habit_active_on(
+            &h,
+            NaiveDate::from_ymd_opt(2026, 6, 2).unwrap()
+        ));
+        assert!(habit_active_on(
+            &h,
+            NaiveDate::from_ymd_opt(2026, 6, 4).unwrap()
+        ));
+        assert!(habit_active_on(
+            &h,
+            NaiveDate::from_ymd_opt(2026, 6, 7).unwrap()
+        ));
     }
 
     #[test]
     fn before_start_date_inactive() {
-        let h = habit_by_days(vec![Weekday::Mon], NaiveDate::from_ymd_opt(2026, 6, 8).unwrap());
-        assert!(!habit_active_on(&h, NaiveDate::from_ymd_opt(2026, 6, 1).unwrap()));
-        assert!(habit_active_on(&h, NaiveDate::from_ymd_opt(2026, 6, 8).unwrap()));
+        let h = habit_by_days(
+            vec![Weekday::Mon],
+            NaiveDate::from_ymd_opt(2026, 6, 8).unwrap(),
+        );
+        assert!(!habit_active_on(
+            &h,
+            NaiveDate::from_ymd_opt(2026, 6, 1).unwrap()
+        ));
+        assert!(habit_active_on(
+            &h,
+            NaiveDate::from_ymd_opt(2026, 6, 8).unwrap()
+        ));
     }
 
     #[test]
