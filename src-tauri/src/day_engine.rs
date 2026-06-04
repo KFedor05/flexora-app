@@ -322,8 +322,7 @@ pub fn recompute_day_status(data: &mut AppData, date: NaiveDate) -> DayStatus {
         // Drop the stored Day only if it carries no progress at all. Counter
         // values above zero count as progress even when status is Pending.
         let has_progress = day.entries.iter().any(|e| {
-            !matches!(e.status, EntryStatus::Pending)
-                || e.counter_current.is_some_and(|v| v > 0.0)
+            !matches!(e.status, EntryStatus::Pending) || e.counter_current.is_some_and(|v| v > 0.0)
         });
         let nothing_to_remember = !day.skipped_whole_day && !has_progress;
         (status, nothing_to_remember)
