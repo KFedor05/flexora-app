@@ -258,7 +258,7 @@ function renderByDays(container) {
         <span class="section-title">${escape(sectionLabel(section))}</span>
         <span class="section-count">${habits.length}</span>
       </header>
-      <div class="habit-list"></div>
+      <div class="habit-list" data-habit-list data-section-id="${escape(section.id)}"></div>
     `;
     const rowsContainer = sectionEl.querySelector(".habit-list");
     habits.forEach((h) => rowsContainer.appendChild(buildHabitRow(h)));
@@ -270,6 +270,19 @@ function renderByDays(container) {
     return;
   }
   content.appendChild(list);
+
+  // Drag-drop habits within a section in by-days mode.
+  // Cross-section drag is intentionally disabled here — by-days is a schedule
+  // view, not a section-management view. Within a section, dragged habits swap
+  // slots with each other while invisible habits (those not active on the
+  // current weekday) stay anchored at their original positions.
+  list.querySelectorAll("[data-habit-list]").forEach((habitListEl) => {
+    Sortable.create(habitListEl, {
+      handle: ".drag-handle",
+      animation: 150,
+      onEnd: (evt) => onHabitDropInByDays(evt),
+    });
+  });
 }
 
 // ============================================================
@@ -510,6 +523,39 @@ async function onHabitDrop(evt) {
     await reload();
   } catch (err) {
     console.error("habit drop failed", err);
+    await reload();
+  }
+}
+
+// In by-days mode the visible list is filtered by weekday. We let the user
+// reorder visible habits among themselves; invisible habits (not active on the
+// current weekday) stay anchored at their original positions in the section.
+// Trick: assign visibleNew[i] the order that visibleOld[i] used to have.
+async function onHabitDropInByDays(evt) {
+  const sectionId = evt.to.dataset.sectionId;
+  const visibleNewIds = Array.from(evt.to.querySelectorAll("[data-habit-id]")).map(
+    (el) => el.dataset.habitId,
+  );
+  const sectionHabits = state.data.habits
+    .filter((h) => h.sectionId === sectionId)
+    .sort((a, b) => a.order - b.order);
+  const visibleOld = sectionHabits.filter((h) => visibleNewIds.includes(h.id));
+
+  if (visibleOld.length !== visibleNewIds.length) {
+    // Sanity check failed — fall back to a full re-number of visible items.
+    await reload();
+    return;
+  }
+  const slots = visibleOld.map((h) => h.order);
+
+  try {
+    for (let i = 0; i < visibleNewIds.length; i++) {
+      // eslint-disable-next-line no-await-in-loop
+      await api.updateHabit(visibleNewIds[i], { order: slots[i] });
+    }
+    await reload();
+  } catch (err) {
+    console.error("habit drop (by-days) failed", err);
     await reload();
   }
 }

@@ -353,6 +353,19 @@ textarea.input {
 .input::placeholder {
   color: var(--text-dim);
 }
+/* Native date picker indicator (calendar icon on the right of <input type="date">).
+   On dark backgrounds the OS-default icon is dark on dark = invisible. Invert it. */
+input[type="date"].input {
+  cursor: pointer;
+}
+[data-theme="dark"] input[type="date"].input::-webkit-calendar-picker-indicator {
+  filter: invert(0.85);
+  cursor: pointer;
+  opacity: 0.7;
+}
+[data-theme="dark"] input[type="date"].input::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+}
 .select {
   appearance: none;
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%238b8fa3' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='m6 9 6 6 6-6'/></svg>");
@@ -743,11 +756,20 @@ textarea.input {
   height: 24px;
   transition: transform 0.15s;
 }
-.section.collapsed .section-collapse svg {
+.section.collapsed .section-collapse svg,
+.today-section.collapsed .section-collapse svg {
   transform: rotate(-90deg);
 }
-.section.collapsed .habit-list {
+.section.collapsed .habit-list,
+.today-section.collapsed .today-task-list {
   display: none;
+}
+.today-section-header {
+  cursor: pointer;
+  user-select: none;
+}
+.today-section-header:hover {
+  color: var(--text);
 }
 .habit-list {
   display: flex;
@@ -1709,9 +1731,14 @@ textarea.input {
   cursor: pointer;
   transition: all 0.15s;
 }
-.cal-nav-arrow:hover {
+.cal-nav-arrow:hover:not(.muted):not(:disabled) {
   background: var(--bg-elev);
   color: var(--text);
+}
+.cal-nav-arrow.muted,
+.cal-nav-arrow:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
 }
 .calendar-body .month-title {
   font-size: 16px;
@@ -1770,6 +1797,11 @@ textarea.input {
   height: 11px;
   display: flex;
   align-items: center;
+}
+.day-cell.empty:not(.today) {
+  background: transparent;
+  border-color: var(--border);
+  opacity: 0.55;
 }
 .day-cell.empty .day-num {
   color: var(--text-dim);

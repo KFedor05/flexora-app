@@ -60,6 +60,21 @@ function setPanelCollapsed(collapsed) {
   localStorage.setItem(PANEL_STATE_KEY, collapsed ? "collapsed" : "expanded");
 }
 
+const SECTION_COLLAPSE_KEY = "flexora.todaySectionsCollapsed";
+function getCollapsedSections() {
+  try {
+    return new Set(JSON.parse(localStorage.getItem(SECTION_COLLAPSE_KEY) || "[]"));
+  } catch {
+    return new Set();
+  }
+}
+function setSectionCollapsed(sectionId, collapsed) {
+  const set = getCollapsedSections();
+  if (collapsed) set.add(sectionId);
+  else set.delete(sectionId);
+  localStorage.setItem(SECTION_COLLAPSE_KEY, JSON.stringify([...set]));
+}
+
 async function reload() {
   const [appData, day] = await Promise.all([api.loadAppData(), api.getDay(state.date)]);
   state.appData = appData;
@@ -237,11 +252,18 @@ function renderSections(container, entries) {
 
     if (!sectionHabits.length) return; // hide empty sections
 
+    const collapsedSet = getCollapsedSections();
+    const isCollapsed = collapsedSet.has(section.id);
+
     const sectionEl = document.createElement("section");
-    sectionEl.className = "today-section";
+    sectionEl.className = `today-section${isCollapsed ? " collapsed" : ""}`;
     sectionEl.innerHTML = `
-      <header class="section-header" style="cursor: default;">
+      <header class="section-header today-section-header">
         <span class="section-title">${escape(sectionLabel(section))}</span>
+        <span class="section-count">${sectionHabits.length}</span>
+        <button type="button" class="section-collapse" data-section-collapse aria-label="${escape(t("editor.toggleCollapse"))}">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+        </button>
       </header>
       <div class="today-task-list"></div>
     `;
@@ -251,6 +273,13 @@ function renderSections(container, entries) {
       if (!entry) return;
       list.appendChild(renderCheckboxRow(h, entry));
     });
+
+    sectionEl.querySelector(".today-section-header").addEventListener("click", () => {
+      const next = !sectionEl.classList.contains("collapsed");
+      sectionEl.classList.toggle("collapsed", next);
+      setSectionCollapsed(section.id, next);
+    });
+
     container.appendChild(sectionEl);
   });
 }

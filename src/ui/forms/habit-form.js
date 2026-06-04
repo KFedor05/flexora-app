@@ -262,6 +262,17 @@ export function openHabitForm({ kind: kindArg, habit = null, sections = [], onSa
     startDateInput.addEventListener("change", () => {
       state.startDate = startDateInput.value;
     });
+    // Force the native calendar popup to open on any click inside the field
+    // (the tiny indicator icon is easy to miss, especially on dark themes).
+    startDateInput.addEventListener("click", () => {
+      if (typeof startDateInput.showPicker === "function") {
+        try {
+          startDateInput.showPicker();
+        } catch {
+          // ignore — fall back to default click behaviour
+        }
+      }
+    });
   }
 
   goalSelect.addEventListener("change", () => {
@@ -434,8 +445,8 @@ function buildInitialState({ habit, kind, sections }) {
     title: "",
     sectionId: defaultSectionId,
     frequencyMode: "byDays",
-    preset: kind === "counter" ? "all" : "weekdays",
-    days: kind === "counter" ? ALL_WEEKDAYS.slice() : defaultWeekdays(),
+    preset: "all",
+    days: ALL_WEEKDAYS.slice(),
     intervalDays: 3,
     startDate: todayIso(),
     goalPreset: "indefinite",

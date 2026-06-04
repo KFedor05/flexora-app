@@ -23,10 +23,12 @@ const state = {
   modalCtl: null,
   swipeAccum: 0,
   swipeCooldown: 0,
+  appData: null, // loaded once on open, used to clamp navigation
 };
 
 export async function openCalendar(initialDate) {
   state.today = await api.todayIso();
+  state.appData = await api.loadAppData();
   const seed = initialDate ? parseIso(initialDate) : parseIso(state.today);
   state.year = seed.getFullYear();
   state.month = seed.getMonth() + 1;
@@ -61,12 +63,36 @@ function onWheel(e) {
   if (state.swipeAccum >= THRESHOLD) {
     state.swipeAccum = 0;
     state.swipeCooldown = performance.now() + 350;
-    navMonth(1);
+    if (!nextMonthDisabled()) navMonth(1);
   } else if (state.swipeAccum <= -THRESHOLD) {
     state.swipeAccum = 0;
     state.swipeCooldown = performance.now() + 350;
-    navMonth(-1);
+    if (!prevMonthDisabled()) navMonth(-1);
   }
+}
+
+// Last day of the previous month, as YYYY-MM-DD.
+function prevMonthEndIso() {
+  const m = state.month === 1 ? 12 : state.month - 1;
+  const y = state.month === 1 ? state.year - 1 : state.year;
+  const last = new Date(y, m, 0).getDate();
+  return `${y}-${String(m).padStart(2, "0")}-${String(last).padStart(2, "0")}`;
+}
+
+// First day of the next month, as YYYY-MM-DD.
+function nextMonthStartIso() {
+  const m = state.month === 12 ? 1 : state.month + 1;
+  const y = state.month === 12 ? state.year + 1 : state.year;
+  return `${y}-${String(m).padStart(2, "0")}-01`;
+}
+
+function prevMonthDisabled() {
+  const endIso = prevMonthEndIso();
+  return !(state.appData?.habits ?? []).some((h) => !h.archived && h.startDate <= endIso);
+}
+
+function nextMonthDisabled() {
+  return nextMonthStartIso() > state.today;
 }
 
 async function renderMonth() {
@@ -83,13 +109,15 @@ async function renderMonth() {
   }
 
   const monthLabel = formatMonthYear(state.year, state.month);
+  const prevDis = prevMonthDisabled();
+  const nextDis = nextMonthDisabled();
   body.innerHTML = `
     <div class="month-nav">
-      <button type="button" class="cal-nav-arrow" data-action="prev" title="${escape(t("calendar.prevMonth"))}" aria-label="${escape(t("calendar.prevMonth"))}">
+      <button type="button" class="cal-nav-arrow${prevDis ? " muted" : ""}" data-action="prev" ${prevDis ? "disabled" : ""} title="${escape(t("calendar.prevMonth"))}" aria-label="${escape(t("calendar.prevMonth"))}">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
       </button>
       <div class="month-title">${escape(monthLabel)}</div>
-      <button type="button" class="cal-nav-arrow" data-action="next" title="${escape(t("calendar.nextMonth"))}" aria-label="${escape(t("calendar.nextMonth"))}">
+      <button type="button" class="cal-nav-arrow${nextDis ? " muted" : ""}" data-action="next" ${nextDis ? "disabled" : ""} title="${escape(t("calendar.nextMonth"))}" aria-label="${escape(t("calendar.nextMonth"))}">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
       </button>
     </div>
@@ -104,8 +132,10 @@ async function renderMonth() {
     </div>
   `;
 
-  body.querySelector("[data-action=prev]").addEventListener("click", () => navMonth(-1));
-  body.querySelector("[data-action=next]").addEventListener("click", () => navMonth(1));
+  const prevBtn = body.querySelector("[data-action=prev]");
+  const nextBtn = body.querySelector("[data-action=next]");
+  if (!prevDis) prevBtn.addEventListener("click", () => navMonth(-1));
+  if (!nextDis) nextBtn.addEventListener("click", () => navMonth(1));
   body.querySelector("[data-action=today]").addEventListener("click", () => {
     pickDate(state.today);
   });
