@@ -36,7 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `opener:allow-open-path` to the default capability — `default` only
   permits URLs, not paths. The button works now.
 - **ESLint warnings cleared** (10 → 0): stale `// eslint-disable-next-line
-  no-await-in-loop` directives that became unnecessary after recent
+no-await-in-loop` directives that became unnecessary after recent
   refactors, an unused `ICONS` import in `calendar.js`, and the dead
   `visibleHabits` helper in `editor.js`.
 
