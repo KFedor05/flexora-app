@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.3] - 2026-06-04
+
+### Changed
+
+- **Calendar verdict colours:** today only goes green the moment you finish
+  the plan (or mark the whole day as skipped). The red / orange "you didn't
+  do it" verdicts are deferred until the day actually ends — no shaming
+  mid-day. Past empty days that had scheduled habits but zero progress now
+  render red.
+- **Calendar flame icon:** marks perfect days (today included), keeps a
+  consistent warm fire colour regardless of cell verdict, so it pops on
+  green cells instead of vanishing into the green background.
+- **Today-perfect emphasis:** when today is green, the cell gets a green
+  glow + green border instead of the neutral blue today emphasis.
+
+### Added
+
+- **Midnight auto-refresh:** at 00:00:01 the current view is remounted so
+  yesterday's verdict colour materialises and Today rolls over to the new
+  day without the user having to navigate. Reschedules itself every
+  midnight; survives system sleep (fires on wake).
+
 ## [1.0.2] - 2026-06-04
 
 ### Changed
@@ -57,7 +79,8 @@ First public release.
   `cargo clippy -D warnings`, `cargo test`
 - GitHub Actions release pipeline builds `.exe` / `.dmg` / `.AppImage` from a tag
 
-[Unreleased]: https://github.com/KFedor05/flexora-app/compare/v1.0.2...HEAD
+[Unreleased]: https://github.com/KFedor05/flexora-app/compare/v1.0.3...HEAD
+[1.0.3]: https://github.com/KFedor05/flexora-app/releases/tag/v1.0.3
 [1.0.2]: https://github.com/KFedor05/flexora-app/releases/tag/v1.0.2
 [1.0.1]: https://github.com/KFedor05/flexora-app/releases/tag/v1.0.1
 [1.0.0]: https://github.com/KFedor05/flexora-app/releases/tag/v1.0.0

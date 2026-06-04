@@ -1795,8 +1795,11 @@ input[type="date"].input {
   margin-top: 1px;
 }
 .day-cell .day-flame {
-  color: var(--text-dim);
-  opacity: 0.4;
+  /* Flame keeps a warm fire color regardless of the cell's verdict
+     background — so it pops against green ("you did it") cells and
+     stays subtle but visible against red / orange ones. */
+  color: #ff7a3d;
+  opacity: 0.95;
   height: 11px;
   display: flex;
   align-items: center;
@@ -1813,25 +1816,13 @@ input[type="date"].input {
   background: rgba(220, 70, 70, 0.18);
   border-color: rgba(220, 70, 70, 0.4);
 }
-.day-cell.red .day-flame {
-  color: #e07070;
-  opacity: 0.9;
-}
 .day-cell.orange {
   background: rgba(255, 165, 70, 0.18);
   border-color: rgba(255, 165, 70, 0.4);
 }
-.day-cell.orange .day-flame {
-  color: #ffae5c;
-  opacity: 0.9;
-}
 .day-cell.green {
   background: rgba(70, 200, 110, 0.18);
   border-color: rgba(70, 200, 110, 0.4);
-}
-.day-cell.green .day-flame {
-  color: #5cd07e;
-  opacity: 0.95;
 }
 .day-cell.future {
   background: transparent;
@@ -1861,6 +1852,15 @@ input[type="date"].input {
 }
 .day-cell.today .day-num {
   color: var(--text);
+}
+/* When today is also perfect, the green verdict wins over the neutral
+   today emphasis — solid green bg + a green glow instead of the blue one. */
+.day-cell.today.green {
+  background: rgba(70, 200, 110, 0.22);
+  border-color: rgba(70, 200, 110, 0.6);
+  box-shadow:
+    0 0 0 2px rgba(70, 200, 110, 0.5),
+    0 0 16px rgba(70, 200, 110, 0.3);
 }
 .day-cell .star-mark {
   position: absolute;

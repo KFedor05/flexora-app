@@ -184,8 +184,11 @@ function monthDayCell(brief, dayNum) {
   const iso = brief.date;
   const isToday = iso === state.today;
   const isFuture = iso > state.today;
-  const colorClass = cellColorClass(brief, isFuture);
-  const hasFlame = !isFuture && brief.done + brief.skipped > 0;
+  const colorClass = cellColorClass(brief, isFuture, isToday);
+  // Flame piggy-backs on the green verdict so today gets the reward the
+  // instant the plan is done, but partial days (red / orange) don't earn it
+  // and future days never show it.
+  const hasFlame = !isFuture && colorClass === "green";
   const star = brief.skippedWholeDay;
 
   // A past day is clickable only when there is something to show on the
@@ -209,22 +212,28 @@ function monthDayCell(brief, dayNum) {
   return cell;
 }
 
-function cellColorClass(brief, isFuture) {
+function cellColorClass(brief, isFuture, isToday) {
   if (isFuture) return "future";
   if (brief.skippedWholeDay) return "green";
-  switch (brief.dayStatus) {
-    case "perfect":
-      return "green";
-    case "partial": {
-      const ratio = brief.total > 0 ? (brief.done + brief.skipped) / brief.total : 0;
-      return ratio >= 0.5 ? "orange" : "red";
-    }
-    case "skipped":
-      return "green";
-    case "empty":
-    default:
-      return "empty";
+  // Nothing was scheduled that day — no verdict to render.
+  if (brief.total === 0) return "empty";
+
+  const ratio = (brief.done + brief.skipped) / brief.total;
+
+  // Today rule: reward shows immediately (green when everything is done),
+  // but red / orange verdicts are deferred until midnight — the day isn't
+  // over yet, no point shaming a half-finished plan.
+  if (isToday) {
+    return ratio >= 1.0 ? "green" : "empty";
   }
+
+  // Past day verdict by completion ratio:
+  //   100%      -> green
+  //   50%-99%   -> orange
+  //   0%-49%    -> red (including 0%: an over day with zero ticks is a miss)
+  if (ratio >= 1.0) return "green";
+  if (ratio >= 0.5) return "orange";
+  return "red";
 }
 
 function navMonth(delta) {
