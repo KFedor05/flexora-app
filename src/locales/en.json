@@ -221,6 +221,7 @@
     "emptySection": "No habits in this section.",
     "emptyDay": "Nothing scheduled for this day.",
     "intervalBadge": "Interval habit",
+    "countersGroup": "Counters",
     "newSectionTitle": "New section",
     "renameSectionTitle": "Rename section",
     "deleteSectionTitle": "Delete section",

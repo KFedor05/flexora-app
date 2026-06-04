@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.4] - 2026-06-04
+
+### Changed
+
+- **Editor:** counters no longer render under habit sections (`Morning`,
+  `Day`, etc.) even though they still carry a `sectionId` for the backend.
+  They appear in their own `Counters` block at the bottom of both
+  "By section" and "By days" views. The by-days variant only shows counters
+  whose frequency hits the chosen weekday.
+
 ## [1.0.3] - 2026-06-04
 
 ### Changed
@@ -79,7 +89,8 @@ First public release.
   `cargo clippy -D warnings`, `cargo test`
 - GitHub Actions release pipeline builds `.exe` / `.dmg` / `.AppImage` from a tag
 
-[Unreleased]: https://github.com/KFedor05/flexora-app/compare/v1.0.3...HEAD
+[Unreleased]: https://github.com/KFedor05/flexora-app/compare/v1.0.4...HEAD
+[1.0.4]: https://github.com/KFedor05/flexora-app/releases/tag/v1.0.4
 [1.0.3]: https://github.com/KFedor05/flexora-app/releases/tag/v1.0.3
 [1.0.2]: https://github.com/KFedor05/flexora-app/releases/tag/v1.0.2
 [1.0.1]: https://github.com/KFedor05/flexora-app/releases/tag/v1.0.1

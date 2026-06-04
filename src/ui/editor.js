@@ -98,7 +98,9 @@ function renderFlat(container) {
     .filter((s) => !s.isDefault || habitsForSection(s.id).length > 0)
     .sort((a, b) => a.order - b.order);
 
-  if (!visibleSections.length) {
+  const counters = allActiveCounters();
+
+  if (!visibleSections.length && !counters.length) {
     container.innerHTML = `<div class="editor-empty">${escape(t("editor.emptyAll"))}</div>`;
     return;
   }
@@ -110,6 +112,7 @@ function renderFlat(container) {
   visibleSections.forEach((section) => {
     list.appendChild(buildSectionElement(section, { mode: "flat" }));
   });
+  if (counters.length) list.appendChild(buildCountersBlock(counters));
   container.appendChild(list);
 
   // Drag-drop sections.
@@ -189,6 +192,26 @@ function buildSectionElement(section, { mode }) {
   return sectionEl;
 }
 
+// Counters never live inside habit sections — they have their own group at
+// the bottom of the editor. No drag-handle on the header (it isn't a section
+// you can reorder), no collapse, no rename/delete. Individual rows still
+// have their drag handle so the user can reorder counters among themselves.
+function buildCountersBlock(counters) {
+  const block = document.createElement("section");
+  block.className = "section counters-block";
+  block.dataset.counterBlock = "1";
+  block.innerHTML = `
+    <header class="section-header" style="cursor: default;">
+      <span class="section-title">${escape(t("editor.countersGroup"))}</span>
+      <span class="section-count">${counters.length}</span>
+    </header>
+    <div class="habit-list" data-counters-list></div>
+  `;
+  const rowsContainer = block.querySelector("[data-counters-list]");
+  counters.forEach((h) => rowsContainer.appendChild(buildHabitRow(h)));
+  return block;
+}
+
 function buildHabitRow(habit) {
   const row = document.createElement("div");
   row.className = "row";
@@ -265,6 +288,13 @@ function renderByDays(container) {
     list.appendChild(sectionEl);
   });
 
+  // Counters that are active on this weekday — own block, not under a section.
+  const dayCounters = allActiveCounters().filter((h) => isOnDay(h, today));
+  if (dayCounters.length) {
+    list.appendChild(buildCountersBlock(dayCounters));
+    anyShown = true;
+  }
+
   if (!anyShown) {
     content.innerHTML = `<div class="editor-empty">${escape(t("editor.emptyDay"))}</div>`;
     return;
@@ -290,8 +320,16 @@ function renderByDays(container) {
 // ============================================================
 
 function habitsForSection(sectionId) {
+  // Counters are never grouped under a habit section — they belong in their
+  // own Counters block at the end of the editor.
   return state.data.habits
-    .filter((h) => h.sectionId === sectionId && !h.archived && !h.completed)
+    .filter((h) => h.sectionId === sectionId && !h.archived && !h.completed && h.type !== "counter")
+    .sort((a, b) => a.order - b.order);
+}
+
+function allActiveCounters() {
+  return state.data.habits
+    .filter((h) => h.type === "counter" && !h.archived && !h.completed)
     .sort((a, b) => a.order - b.order);
 }
 

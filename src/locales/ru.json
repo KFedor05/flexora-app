@@ -223,6 +223,7 @@
     "emptySection": "В этой секции нет привычек.",
     "emptyDay": "На этот день ничего не запланировано.",
     "intervalBadge": "Интервальная привычка",
+    "countersGroup": "Счётчики",
     "newSectionTitle": "Новая секция",
     "renameSectionTitle": "Переименовать секцию",
     "deleteSectionTitle": "Удалить секцию",
