@@ -17,7 +17,7 @@
 use chrono::NaiveDate;
 
 use crate::day_engine;
-use crate::model::{AppData, DayStatus, EntryStatus, Habit, Streak};
+use crate::model::{AppData, DayStatus, EntryStatus, Habit, PerfectDayStreak, Streak};
 
 /// Compute the per-habit streak as of `today`. Also returns the date the
 /// streak last grew (`last_completed_date`), used by JS to render "since X".
@@ -118,14 +118,18 @@ pub fn recompute_all_streaks(data: &mut AppData, today: NaiveDate) {
     recompute_perfect_day_streak(data, today);
 }
 
-pub fn recompute_perfect_day_streak(data: &mut AppData, today: NaiveDate) {
-    let mut date = today;
+/// Walk the perfect-day streak backward from `as_of_date` without touching
+/// any cached state. Uses `build_day_brief` (not `build_day_view`) to avoid
+/// recursing into per-date streak computation. Returns a snapshot of how
+/// the perfect-day streak stood at the end of `as_of_date`.
+pub fn compute_perfect_day_streak(data: &AppData, as_of_date: NaiveDate) -> PerfectDayStreak {
+    let mut date = as_of_date;
     let mut streak = 0u32;
     let mut last_perfect: Option<NaiveDate> = None;
 
     loop {
-        let view = day_engine::build_day_view(data, date);
-        match view.day_status {
+        let brief = day_engine::build_day_brief(data, date);
+        match brief.day_status {
             DayStatus::Perfect | DayStatus::Skipped => {
                 streak += 1;
                 if last_perfect.is_none() {
@@ -136,8 +140,8 @@ pub fn recompute_perfect_day_streak(data: &mut AppData, today: NaiveDate) {
                 // No expected habits this day — neutral, keep walking.
             }
             DayStatus::Partial => {
-                if date == today {
-                    // Don't break today's potential.
+                if date == as_of_date {
+                    // The viewed day still has time to be completed.
                 } else {
                     break;
                 }
@@ -153,10 +157,19 @@ pub fn recompute_perfect_day_streak(data: &mut AppData, today: NaiveDate) {
         }
     }
 
-    let longest = data.perfect_day_streak.longest.max(streak);
-    data.perfect_day_streak.current = streak;
-    data.perfect_day_streak.longest = longest;
-    data.perfect_day_streak.last_perfect_date = last_perfect;
+    let cached_longest = data.perfect_day_streak.longest;
+    PerfectDayStreak {
+        current: streak,
+        longest: cached_longest.max(streak),
+        last_perfect_date: last_perfect,
+    }
+}
+
+pub fn recompute_perfect_day_streak(data: &mut AppData, today: NaiveDate) {
+    let computed = compute_perfect_day_streak(data, today);
+    data.perfect_day_streak.current = computed.current;
+    data.perfect_day_streak.longest = data.perfect_day_streak.longest.max(computed.current);
+    data.perfect_day_streak.last_perfect_date = computed.last_perfect_date;
 }
 
 #[cfg(test)]

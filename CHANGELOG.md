@@ -7,6 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.8] - 2026-06-05
+
+### Fixed
+
+- **Streak pill now reflects the date you're looking at, not today.** When
+  navigating to a past date with the `‹` / `›` arrows, each habit's streak
+  pill used to show today's current value (e.g. always "2") regardless of
+  which day was open. It now walks the streak history back from the
+  viewed date, so June 4th shows the streak as it stood at the end of
+  June 4th, June 5th shows the next day's value, and so on. The same
+  applies to the perfect-day pill in the date bar.
+
+### Changed
+
+- **Streak pill dims until today is checked.** On a new day the pill
+  carries yesterday's streak number (backend keeps it alive through one
+  Pending day) — but the flame now stays grey until you actually check
+  the habit. Click the row and the flame ignites; before, the fire was
+  on the whole day regardless of progress. Frozen / skipped days keep
+  their existing blue snowflake styling.
+
+### Internal
+
+- Extracted `compute_perfect_day_streak` as a pure (non-mutating)
+  function alongside the existing `compute_habit_streak`. `build_day_view`
+  now uses both to compute per-date streak values; `recompute_*`
+  functions stay as the cache-updating entry points. The recompute path
+  uses `build_day_brief` to avoid recursing into the new per-date
+  computation.
+
 ## [1.0.7] - 2026-06-04
 
 ### Added

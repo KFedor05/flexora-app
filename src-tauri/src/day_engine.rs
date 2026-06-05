@@ -123,12 +123,25 @@ pub fn build_day_view(data: &AppData, date: NaiveDate) -> DayView {
     let total = entries.len() as u32;
     let day_status = derive_day_status(done, skipped, total, skipped_whole_day);
 
+    // Per-date streak values: the pill on (say) June 4th should show the
+    // streak as it stood at the end of June 4th, not today's current value.
+    // `longest` stays from the cached record (it's a global historical max,
+    // not a "max as of this date" concept the UI cares about).
     let mut habit_streaks: HashMap<String, Streak> = HashMap::new();
     for h in &active_habits {
-        if let Some(s) = data.streaks.get(&h.id) {
-            habit_streaks.insert(h.id.clone(), s.clone());
-        }
+        let (current, last_completed) = crate::streaks::compute_habit_streak(data, h, date);
+        let cached = data.streaks.get(&h.id);
+        habit_streaks.insert(
+            h.id.clone(),
+            Streak {
+                current,
+                longest: cached.map(|s| s.longest).unwrap_or(current),
+                last_completed_date: last_completed,
+                frozen_by_date: cached.and_then(|s| s.frozen_by_date),
+            },
+        );
     }
+    let perfect_day_streak = crate::streaks::compute_perfect_day_streak(data, date);
 
     DayView {
         date,
@@ -141,7 +154,7 @@ pub fn build_day_view(data: &AppData, date: NaiveDate) -> DayView {
             total,
         },
         habit_streaks,
-        perfect_day_streak: data.perfect_day_streak.clone(),
+        perfect_day_streak,
     }
 }
 
@@ -167,7 +180,7 @@ pub fn build_month_view(data: &AppData, year: i32, month: u32) -> Vec<DayBrief> 
     out
 }
 
-fn build_day_brief(data: &AppData, date: NaiveDate) -> DayBrief {
+pub(crate) fn build_day_brief(data: &AppData, date: NaiveDate) -> DayBrief {
     let stored = data.days.get(&date.to_string());
     let skipped_whole_day = stored.is_some_and(|d| d.skipped_whole_day);
 
