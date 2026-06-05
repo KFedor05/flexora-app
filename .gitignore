@@ -46,3 +46,18 @@ icon-work/
 app-icon.png
 ChatGPT Image*.png
 *:Zone.Identifier
+
+# Unused mobile / Windows Store icon variants. Flexora is desktop-only; only
+# the icons listed in src-tauri/tauri.conf.json are bundled. If a future
+# version needs them, regenerate from icon-source.svg with `tauri icon`.
+src-tauri/icons/android/
+src-tauri/icons/ios/
+src-tauri/icons/Square*Logo.png
+src-tauri/icons/StoreLogo.png
+src-tauri/icons/64x64.png
+
+# Internal planning docs and HTML design mockups — kept locally for reference
+# but not part of the public repo (private to the solo author).
+PLAN.md
+PHASES.md
+mockup/
