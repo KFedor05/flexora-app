@@ -149,9 +149,7 @@ fn try_redirect_to_existing_instance() -> bool {
     use windows_sys::Win32::Foundation::CloseHandle;
     use windows_sys::Win32::System::DataExchange::COPYDATASTRUCT;
     use windows_sys::Win32::System::Threading::OpenMutexW;
-    use windows_sys::Win32::UI::WindowsAndMessaging::{
-        FindWindowW, SendMessageW, WM_COPYDATA,
-    };
+    use windows_sys::Win32::UI::WindowsAndMessaging::{FindWindowW, SendMessageW, WM_COPYDATA};
 
     // Win32 SYNCHRONIZE access right — stable since forever, hard-coded to
     // avoid coupling to whichever windows-sys module re-exports it this week.
