@@ -294,7 +294,7 @@ function renderCheckboxRow(habit, entry) {
   // a special day, and that completion grows the streak.
   const frozen = entry.status === "skipped" || (specialDay && entry.status !== "done");
   const future = isFuture();
-  const todayPending = state.date === state.today && entry.status === "pending" && !frozen;
+  const notDoneVisible = entry.status !== "done" && !frozen;
   row.className = `task-row${entry.status === "done" ? " completed" : ""}${frozen ? " frozen" : ""}${future ? " future" : ""}`;
   row.dataset.habitId = habit.id;
   const checkboxNoop = future;
@@ -310,7 +310,7 @@ function renderCheckboxRow(habit, entry) {
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
     </button>
     <span class="task-name">${escape(habit.title)}</span>
-    ${renderStreakPill(habit.id, frozen, todayPending)}
+    ${renderStreakPill(habit.id, frozen, notDoneVisible)}
     <button type="button" class="star-btn ${frozen ? "active" : ""}" data-action="freeze" ${freezeNoop ? 'data-noop="true"' : ""} ${starDisabled ? "disabled" : ""} title="${escape(starTitle)}" aria-label="${escape(starTitle)}">
       ${frozen ? ICONS.starFilled : ICONS.star}
     </button>
@@ -346,14 +346,15 @@ function renderCheckboxRow(habit, entry) {
   return row;
 }
 
-function renderStreakPill(habitId, frozen, todayPending = false) {
+function renderStreakPill(habitId, frozen, notDoneVisible = false) {
   const s = state.day.habitStreaks?.[habitId];
   const count = s?.current ?? 0;
-  // Pill stays dim on the current date until the user actually checks the
-  // habit. The number itself is inherited from yesterday (backend keeps
-  // the streak alive through one Pending day), but the fire only ignites
-  // once today goes Done. Frozen days override with the snowflake style.
-  const dim = count === 0 || todayPending ? "is-dim" : "";
+  // Fire only ignites on dates that are actually Done. Backend keeps the
+  // streak number alive through one Pending day (so today's pill inherits
+  // yesterday's count, and a past Pending day inherits its predecessor),
+  // but visually we dim until the day is Done. Frozen days override with
+  // the snowflake style and keep their count un-dimmed.
+  const dim = count === 0 || notDoneVisible ? "is-dim" : "";
   return `
     <span class="streak-pill ${dim} ${frozen ? "frozen" : ""}">
       ${frozen ? ICONS.snow : ICONS.fire}
@@ -500,12 +501,12 @@ function renderCounterCard(habit, entry) {
   const stepsHtml = steps
     .map(
       (s) =>
-        `<button type="button" class="counter-step minus" data-step="-${s}">−${formatNum(s)}</button>`,
+        `<button type="button" class="counter-step plus" data-step="${s}">+${formatNum(s)}</button>`,
     )
     .concat(
       steps.map(
         (s) =>
-          `<button type="button" class="counter-step plus" data-step="${s}">+${formatNum(s)}</button>`,
+          `<button type="button" class="counter-step minus" data-step="-${s}">−${formatNum(s)}</button>`,
       ),
     )
     .join("");
@@ -513,7 +514,7 @@ function renderCounterCard(habit, entry) {
   const specialDay = !!state.day.skippedWholeDay;
   const frozen = entry.status === "skipped" || (specialDay && entry.status !== "done");
   const future = isFuture();
-  const todayPending = state.date === state.today && entry.status === "pending" && !frozen;
+  const notDoneVisible = entry.status !== "done" && !frozen;
   if (frozen) card.classList.add("frozen");
   if (future) card.classList.add("future");
 
@@ -521,12 +522,12 @@ function renderCounterCard(habit, entry) {
     ? steps
         .map(
           (s) =>
-            `<button type="button" class="counter-step minus" disabled>−${formatNum(s)}</button>`,
+            `<button type="button" class="counter-step plus" disabled>+${formatNum(s)}</button>`,
         )
         .concat(
           steps.map(
             (s) =>
-              `<button type="button" class="counter-step plus" disabled>+${formatNum(s)}</button>`,
+              `<button type="button" class="counter-step minus" disabled>−${formatNum(s)}</button>`,
           ),
         )
         .join("")
@@ -536,7 +537,7 @@ function renderCounterCard(habit, entry) {
     <div class="counter-card-head">
       <div class="counter-card-name">${escape(habit.title)}</div>
       <div class="counter-card-head-right">
-        ${renderStreakPill(habit.id, frozen, todayPending)}
+        ${renderStreakPill(habit.id, frozen, notDoneVisible)}
         <button type="button" class="star-btn ${frozen ? "active" : ""}" data-action="freeze" ${future || entry.status === "done" || specialDay ? 'data-noop="true"' : ""} ${future || specialDay ? "disabled" : ""} title="${escape(future ? t("today.futureDisabled") : specialDay ? t("today.specialDayFrozen") : t(frozen ? "today.unfreeze" : "today.freeze"))}" aria-label="${escape(future ? t("today.futureDisabled") : specialDay ? t("today.specialDayFrozen") : t(frozen ? "today.unfreeze" : "today.freeze"))}">
           ${frozen ? ICONS.starFilled : ICONS.star}
         </button>

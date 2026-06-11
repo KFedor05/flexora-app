@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.9] - 2026-06-11
+
+### Fixed
+
+- **Streak flame no longer lights up on past Pending days.** When you
+  scrolled back to a date you hadn't checked, the streak pill still
+  inherited the count from the previous Done day (backend keeps the
+  streak alive through one Pending day) and rendered with the flame
+  lit, as if the habit had been completed. The pill now stays dim on
+  any date whose entry isn't Done, so an unfilled day reads as unfilled
+  regardless of where you are in history. Frozen / skipped days keep
+  their snowflake styling and don't dim.
+- **Hardened single-instance check on Windows.** Several fast clicks
+  on the taskbar pin could spawn a second Flexora process because of a
+  race inside `tauri-plugin-single-instance` between its mutex creation
+  and the registration of its hidden event-target window. Two live
+  processes share the same `data.json` and the last writer wins, so a
+  tick made in one window could silently erase a tick from the other.
+  Added a race-tolerant Windows-only pre-flight in `flexora_lib::run`
+  that opens the plugin's mutex (read-only, so it doesn't sabotage the
+  plugin's own check), waits up to three seconds for the plugin's hidden
+  window, then either signals it (and the existing primary window comes
+  forward) or exits silently if the primary is wedged — never spawns a
+  duplicate.
+
 ## [1.0.8] - 2026-06-05
 
 ### Fixed

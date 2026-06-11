@@ -1135,7 +1135,7 @@ dependencies = [
 
 [[package]]
 name = "flexora"
-version = "1.0.7"
+version = "1.0.9"
 dependencies = [
  "chrono",
  "log",
@@ -1156,6 +1156,7 @@ dependencies = [
  "tauri-plugin-window-state",
  "thiserror 1.0.69",
  "uuid",
+ "windows-sys 0.60.2",
 ]
 
 [[package]]
