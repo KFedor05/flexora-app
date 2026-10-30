@@ -135,7 +135,7 @@ function renderHeader() {
       <button type="button" class="nav-btn" data-action="back">${escape(t("nav.back"))}</button>
       <button type="button" class="nav-btn ${prevBlocked ? "muted" : ""}" data-action="prev-day" title="${escape(t("today.prevDay"))}" ${prevBlocked ? "disabled" : ""}>‹</button>
       <button type="button" class="nav-btn ${nextBlocked ? "muted" : ""}" data-action="next-day" title="${escape(t("today.nextDay"))}" ${nextBlocked ? "disabled" : ""}>›</button>
-      <button type="button" class="nav-btn ${state.date === state.today ? "is-hidden" : ""}" data-action="goto-today">${escape(t("today.todayButton"))}</button>
+      <button type="button" class="nav-btn ${state.date === state.today ? "muted" : ""}" data-action="goto-today" ${state.date === state.today ? "disabled" : ""}>${escape(t("today.todayButton"))}</button>
       <button type="button" class="nav-btn" data-action="open-calendar">${escape(t("today.calendar"))}</button>
       <button type="button" class="nav-btn" data-action="goto-editor">${escape(t("today.byDays"))}</button>
       <button type="button" class="btn-icon-circle" data-action="new-habit" title="${escape(t("today.newHabit"))}">${ICONS.plus}</button>
