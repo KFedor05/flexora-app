@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.10] - 2026-10-30
+
+### Fixed
+
+- **Open data folder works again.** Allow the opener plugin to open the
+  application's own data directory without granting access to unrelated paths.
+- **Day navigation buttons stay in place.** Today is always visible between
+  the day arrows and Calendar, and is disabled when viewing today's date.
+- **Counter panel remembers its state after restart.** Save the collapsed or
+  expanded preference with the application settings, migrating the previous
+  webview preference on first use. Narrow windows still collapse the panel
+  temporarily without overwriting the saved preference. Existing habits and
+  history remain compatible.
+
 ## [1.0.9] - 2026-06-11
 
 ### Fixed
@@ -240,7 +254,8 @@ First public release.
   `cargo clippy -D warnings`, `cargo test`
 - GitHub Actions release pipeline builds `.exe` / `.dmg` / `.AppImage` from a tag
 
-[Unreleased]: https://github.com/KFedor05/flexora-app/compare/v1.0.4...HEAD
+[Unreleased]: https://github.com/KFedor05/flexora-app/compare/v1.0.10...HEAD
+[1.0.10]: https://github.com/KFedor05/flexora-app/releases/tag/v1.0.10
 [1.0.4]: https://github.com/KFedor05/flexora-app/releases/tag/v1.0.4
 [1.0.3]: https://github.com/KFedor05/flexora-app/releases/tag/v1.0.3
 [1.0.2]: https://github.com/KFedor05/flexora-app/releases/tag/v1.0.2
