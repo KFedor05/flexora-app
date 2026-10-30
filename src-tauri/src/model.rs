@@ -204,6 +204,9 @@ pub struct Settings {
     pub minimize_to_tray: bool,
     pub open_to_today: bool,
     pub first_launch_done: bool,
+    /// None on older installs: migrate the existing webview preference once.
+    #[serde(default)]
+    pub counter_panel_collapsed: Option<bool>,
 }
 
 impl Default for Settings {
@@ -215,6 +218,7 @@ impl Default for Settings {
             minimize_to_tray: true,
             open_to_today: true,
             first_launch_done: false,
+            counter_panel_collapsed: None,
         }
     }
 }
@@ -316,4 +320,32 @@ pub struct SettingsPatch {
     pub minimize_to_tray: Option<bool>,
     pub open_to_today: Option<bool>,
     pub first_launch_done: Option<bool>,
+    pub counter_panel_collapsed: Option<bool>,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn older_data_loads_without_counter_panel_setting() {
+        let mut old_data = serde_json::to_value(AppData::default()).unwrap();
+        old_data["settings"]
+            .as_object_mut()
+            .unwrap()
+            .remove("counterPanelCollapsed");
+        let data: AppData = serde_json::from_value(old_data).unwrap();
+        assert_eq!(data.settings.counter_panel_collapsed, None);
+    }
+
+    #[test]
+    fn counter_panel_preference_survives_serialization() {
+        for collapsed in [true, false] {
+            let mut data = AppData::default();
+            data.settings.counter_panel_collapsed = Some(collapsed);
+            let json = serde_json::to_vec(&data).unwrap();
+            let restored: AppData = serde_json::from_slice(&json).unwrap();
+            assert_eq!(restored.settings.counter_panel_collapsed, Some(collapsed));
+        }
+    }
 }

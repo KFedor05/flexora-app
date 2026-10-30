@@ -542,6 +542,9 @@ pub fn update_settings(patch: SettingsPatch, state: State<'_, SharedState>) -> C
             if let Some(first_launch_done) = patch.first_launch_done {
                 s.first_launch_done = first_launch_done;
             }
+            if let Some(collapsed) = patch.counter_panel_collapsed {
+                s.counter_panel_collapsed = Some(collapsed);
+            }
             Ok(s.clone())
         })
         .map_err(Into::into)

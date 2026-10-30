@@ -38,6 +38,7 @@
  *   minimizeToTray: boolean,
  *   openToToday: boolean,
  *   firstLaunchDone: boolean,
+ *   counterPanelCollapsed?: boolean | null,
  * }} Settings
  *
  * @typedef {{

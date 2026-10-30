@@ -53,12 +53,24 @@ function onWindowResize() {
 
 function isPanelCollapsed() {
   if (window.innerWidth < PANEL_AUTOCOLLAPSE_WIDTH) return true;
-  const saved = localStorage.getItem(PANEL_STATE_KEY);
-  return saved !== "expanded";
+  return state.appData.settings.counterPanelCollapsed;
 }
 
-function setPanelCollapsed(collapsed) {
-  localStorage.setItem(PANEL_STATE_KEY, collapsed ? "collapsed" : "expanded");
+async function setPanelCollapsed(collapsed) {
+  try {
+    state.appData.settings = await api.updateSettings({ counterPanelCollapsed: collapsed });
+    renderRightPanel();
+  } catch (err) {
+    showError(err);
+  }
+}
+
+function legacyPanelCollapsed() {
+  try {
+    return localStorage.getItem(PANEL_STATE_KEY) !== "expanded";
+  } catch {
+    return true;
+  }
 }
 
 const SECTION_COLLAPSE_KEY = "flexora.todaySectionsCollapsed";
@@ -80,6 +92,11 @@ async function reload() {
   const [appData, day] = await Promise.all([api.loadAppData(), api.getDay(state.date)]);
   state.appData = appData;
   state.day = day;
+  if (appData.settings.counterPanelCollapsed == null) {
+    state.appData.settings = await api.updateSettings({
+      counterPanelCollapsed: legacyPanelCollapsed(),
+    });
+  }
   render();
 }
 
@@ -401,8 +418,7 @@ function renderCollapsedPanel() {
     </button>
   `;
   state.rightPanel.querySelector("[data-action=expand]").addEventListener("click", () => {
-    setPanelCollapsed(false);
-    renderRightPanel();
+    void setPanelCollapsed(false);
   });
 }
 
@@ -430,8 +446,7 @@ function renderExpandedPanel() {
 
   if (canManuallyCollapse) {
     state.rightPanel.querySelector("[data-action=collapse]").addEventListener("click", () => {
-      setPanelCollapsed(true);
-      renderRightPanel();
+      void setPanelCollapsed(true);
     });
   }
 
