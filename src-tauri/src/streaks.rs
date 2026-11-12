@@ -189,6 +189,7 @@ mod tests {
             section_id: "morning".into(),
             kind: HabitKind::Checkbox,
             counter: None,
+            frequency_history: Default::default(),
             frequency: freq,
             start_date: start,
             end_date: None,
@@ -235,6 +236,134 @@ mod tests {
                 preset: FrequencyPreset::All,
             },
         )
+    }
+
+    #[test]
+    fn schedule_expansion_preserves_ten_perfect_days_and_habit_streak() {
+        let start = NaiveDate::from_ymd_opt(2026, 6, 1).unwrap(); // Monday
+        let today = start + chrono::Duration::days(10);
+        let mut data = AppData::default();
+        let mut daily = daily_habit(start);
+        daily.id = "daily".into();
+        data.habits.push(daily);
+        data.habits.push(make_habit(
+            start,
+            Frequency::ByDays {
+                days: vec![Weekday::Mon, Weekday::Wed, Weekday::Fri],
+                preset: FrequencyPreset::Custom,
+            },
+        ));
+        for offset in 0..10 {
+            let date = start + chrono::Duration::days(offset);
+            set_status(&mut data, date, "daily", EntryStatus::Done);
+            if day_engine::habit_active_on(&data.habits[1], date) {
+                set_status(&mut data, date, "h", EntryStatus::Done);
+            }
+        }
+        let days_before = serde_json::to_value(&data.days).unwrap();
+        let expected_habit_streak = compute_habit_streak(&data, &data.habits[1], today).0;
+        assert_eq!(compute_perfect_day_streak(&data, today).current, 10);
+
+        data.habits[1].set_frequency(daily_habit(start).frequency, today);
+        recompute_all_streaks(&mut data, today);
+        assert_eq!(data.perfect_day_streak.current, 10);
+        assert_eq!(data.streaks["h"].current, expected_habit_streak);
+        assert_eq!(serde_json::to_value(&data.days).unwrap(), days_before);
+        for offset in 0..10 {
+            let date = start + chrono::Duration::days(offset);
+            assert_eq!(
+                day_engine::build_day_brief(&data, date).day_status,
+                DayStatus::Perfect
+            );
+            assert_eq!(
+                day_engine::build_day_view(&data, date).day_status,
+                DayStatus::Perfect
+            );
+        }
+        let tuesday = start + chrono::Duration::days(1);
+        assert!(!day_engine::habit_active_on(&data.habits[1], tuesday));
+        assert!(day_engine::habit_active_on(&data.habits[1], today));
+        assert_eq!(day_engine::build_day_view(&data, today).entries.len(), 2);
+
+        // Export/import and restart preserve the effective dates as well.
+        let restored: AppData =
+            serde_json::from_slice(&serde_json::to_vec(&data).unwrap()).unwrap();
+        assert_eq!(compute_perfect_day_streak(&restored, today).current, 10);
+        assert!(!day_engine::habit_active_on(&restored.habits[1], tuesday));
+    }
+
+    #[test]
+    fn schedule_narrowing_and_repeated_edits_preserve_previous_revisions() {
+        let start = NaiveDate::from_ymd_opt(2026, 6, 1).unwrap();
+        let today = start + chrono::Duration::days(3);
+        let mut habit = daily_habit(start);
+        let daily = habit.frequency.clone();
+        let monday_only = Frequency::ByDays {
+            days: vec![Weekday::Mon],
+            preset: FrequencyPreset::Custom,
+        };
+        habit.set_frequency(monday_only.clone(), today);
+        assert!(day_engine::habit_active_on(
+            &habit,
+            today.pred_opt().unwrap()
+        ));
+        assert!(!day_engine::habit_active_on(&habit, today));
+        habit.set_frequency(Frequency::Interval { interval_days: 2 }, today);
+        assert_eq!(habit.frequency_on(start), &daily);
+        assert_eq!(habit.frequency_history.len(), 2);
+        assert!(day_engine::habit_active_on(
+            &habit,
+            start + chrono::Duration::days(4)
+        ));
+        assert!(!day_engine::habit_active_on(&habit, today));
+        let later = today + chrono::Duration::days(4);
+        habit.set_frequency(monday_only.clone(), later);
+        assert_eq!(
+            habit.frequency_on(today),
+            &Frequency::Interval { interval_days: 2 }
+        );
+        assert_eq!(habit.frequency_on(later), &monday_only);
+        assert_eq!(habit.frequency_history.len(), 3);
+    }
+
+    #[test]
+    fn legacy_habit_loads_and_first_edit_keeps_existing_history() {
+        let start = NaiveDate::from_ymd_opt(2026, 6, 1).unwrap();
+        let mut json = serde_json::to_value(daily_habit(start)).unwrap();
+        json.as_object_mut().unwrap().remove("frequencyHistory");
+        let mut habit: Habit = serde_json::from_value(json).unwrap();
+        assert!(habit.frequency_history.is_empty());
+        let original = habit.frequency.clone();
+        habit.set_frequency(original.clone(), start);
+        assert!(habit.frequency_history.is_empty());
+        habit.set_frequency(
+            Frequency::Interval { interval_days: 3 },
+            start + chrono::Duration::days(10),
+        );
+        assert_eq!(habit.frequency_on(start), &original);
+        assert!(day_engine::habit_active_on(
+            &habit,
+            start + chrono::Duration::days(1)
+        ));
+    }
+
+    #[test]
+    fn schedule_edit_before_start_applies_when_habit_begins() {
+        let start = NaiveDate::from_ymd_opt(2026, 6, 8).unwrap();
+        let mut habit = daily_habit(start);
+        let frequency = Frequency::Interval { interval_days: 3 };
+        habit.set_frequency(frequency.clone(), start.pred_opt().unwrap());
+        assert_eq!(habit.frequency_on(start), &frequency);
+        assert_eq!(habit.frequency_history.len(), 1);
+        assert!(!day_engine::habit_active_on(
+            &habit,
+            start.pred_opt().unwrap()
+        ));
+        assert!(day_engine::habit_active_on(&habit, start));
+        assert!(!day_engine::habit_active_on(
+            &habit,
+            start.succ_opt().unwrap()
+        ));
     }
 
     #[test]
@@ -471,6 +600,7 @@ mod tests {
                 unit: "l".into(),
                 steps: vec![0.2],
             }),
+            frequency_history: Default::default(),
             frequency: Frequency::ByDays {
                 days: vec![Weekday::Mon, Weekday::Tue, Weekday::Wed],
                 preset: FrequencyPreset::Custom,
@@ -717,6 +847,7 @@ mod tests {
                 unit: "l".into(),
                 steps: vec![0.5],
             }),
+            frequency_history: Default::default(),
             frequency: Frequency::ByDays {
                 days: vec![
                     Weekday::Mon,

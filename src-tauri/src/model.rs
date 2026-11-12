@@ -63,7 +63,7 @@ pub enum FrequencyPreset {
     Custom,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "type", rename_all = "camelCase")]
 pub enum Frequency {
     #[serde(rename = "byDays")]
@@ -105,6 +105,10 @@ pub struct Habit {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub counter: Option<CounterConfig>,
     pub frequency: Frequency,
+    /// Schedule revisions by first effective local date. Empty in legacy files;
+    /// the first edit preserves their current schedule as the baseline.
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub frequency_history: BTreeMap<NaiveDate, Frequency>,
     pub start_date: NaiveDate,
     pub end_date: Option<NaiveDate>,
     pub goal_preset: GoalPreset,
@@ -115,6 +119,32 @@ pub struct Habit {
     pub completed: bool,
     pub completed_at: Option<DateTime<Utc>>,
     pub created_at: DateTime<Utc>,
+}
+
+impl Habit {
+    pub fn frequency_on(&self, date: NaiveDate) -> &Frequency {
+        self.frequency_history
+            .range(..=date)
+            .next_back()
+            .map(|(_, frequency)| frequency)
+            .unwrap_or(&self.frequency)
+    }
+
+    /// Changes take effect today (or at the future start date), never before.
+    pub fn set_frequency(&mut self, frequency: Frequency, today: NaiveDate) {
+        if self.frequency == frequency {
+            return;
+        }
+        if self.frequency_history.is_empty() {
+            self.frequency_history
+                .insert(self.start_date, self.frequency.clone());
+        }
+        let effective_date = today.max(self.start_date);
+        // Also handles repeated edits on the same day without losing the past.
+        self.frequency_history
+            .insert(effective_date, frequency.clone());
+        self.frequency = frequency;
+    }
 }
 
 // -------------------- Sections --------------------

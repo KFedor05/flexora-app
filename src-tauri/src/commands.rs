@@ -60,6 +60,7 @@ pub fn create_habit(input: HabitInput, state: State<'_, SharedState>) -> CmdResu
                 kind: input.kind,
                 counter: input.counter.clone(),
                 frequency: input.frequency.clone(),
+                frequency_history: Default::default(),
                 start_date: input.start_date,
                 end_date: input.end_date,
                 goal_preset: input.goal_preset,
@@ -114,7 +115,7 @@ pub fn update_habit(
                 habit.counter = Some(counter);
             }
             if let Some(frequency) = patch.frequency {
-                habit.frequency = frequency;
+                habit.set_frequency(frequency, today());
             }
             if let Some(end_date) = patch.end_date {
                 habit.end_date = end_date;

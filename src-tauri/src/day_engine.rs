@@ -413,7 +413,7 @@ pub fn habit_active_on(habit: &Habit, date: NaiveDate) -> bool {
             return false;
         }
     }
-    match &habit.frequency {
+    match habit.frequency_on(date) {
         Frequency::ByDays { days, .. } => {
             let w: Weekday = date.weekday().into();
             days.contains(&w)
@@ -440,6 +440,7 @@ mod tests {
             section_id: "morning".into(),
             kind: HabitKind::Checkbox,
             counter: None,
+            frequency_history: Default::default(),
             frequency: Frequency::ByDays {
                 days,
                 preset: crate::model::FrequencyPreset::Custom,
@@ -484,6 +485,7 @@ mod tests {
             section_id: "morning".into(),
             kind: HabitKind::Checkbox,
             counter: None,
+            frequency_history: Default::default(),
             frequency: Frequency::Interval { interval_days: 3 },
             start_date: NaiveDate::from_ymd_opt(2026, 6, 1).unwrap(),
             end_date: None,
@@ -570,6 +572,7 @@ mod tests {
                 unit: "l".into(),
                 steps: vec![0.2],
             }),
+            frequency_history: Default::default(),
             frequency: Frequency::ByDays {
                 days: vec![Weekday::Wed],
                 preset: FrequencyPreset::Custom,
@@ -620,6 +623,7 @@ mod tests {
             section_id: "morning".into(),
             kind: HabitKind::Checkbox,
             counter: None,
+            frequency_history: Default::default(),
             frequency: Frequency::ByDays {
                 days: vec![Weekday::Wed],
                 preset: FrequencyPreset::Custom,

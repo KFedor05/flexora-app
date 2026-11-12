@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.11] - 2026-11-12
+
+### Fixed
+
+- Navigation buttons stay in place when the main content gains or loses its
+  vertical scrollbar, including when switching days or collapsing sections.
+- Schedule changes now apply from the day of the edit. Earlier dates keep their
+  original schedule, preserving habit streaks, perfect days, and calendar history.
+  Existing data and recorded completions remain compatible.
+
 ## [1.0.10] - 2026-10-30
 
 ### Fixed
